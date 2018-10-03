@@ -14,12 +14,8 @@ use Slim\Http\Response;
 
 const base_path = '/api/v1';
 
-function processRequest($methodName)
-{
-
-}
-
 // Routes
+
 $app->get(str_replace("{base_path}", base_path, "{base_path}/status"), function (Request $request, Response $response, array $args)
 {
   $this->get('logger')->info("Requesting API status");
@@ -35,11 +31,7 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
   $this->logger->info("Requesting login");
 
   try {
-    $controller = new EntitiesController($this->database);
-
-    $parsedBody = $request->getParsedBody();
-    $user = $controller->login($parsedBody);
-    // $this->logger->info(json_encode($user));
+    $user = CommonUtils::processRequest($request, 'login', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 401);
@@ -51,8 +43,8 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
     return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
   }
 
-  $response->withJson($user);
-  return $response->withStatus(200);
+  // $this->logger->info(json_encode($user));
+  return CommonUtils::prepareSuccessResponse($response, $user, 200);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/logout"), function (Request $request, Response $response, array $args)
