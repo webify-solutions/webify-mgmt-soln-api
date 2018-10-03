@@ -15,7 +15,10 @@ session_start();
 
 // Instantiate the app
 $settings = require __DIR__ . '/../src/settings.php';
+
+// Get an instance of Slim and pass $container into Slim.
 $app = new \Slim\App($settings);
+// $app = new \Slim\App($settings);
 
 // Set up dependencies
 require __DIR__ . '/../src/dependencies.php';
@@ -25,6 +28,49 @@ require __DIR__ . '/../src/middleware.php';
 
 // Register routes
 require __DIR__ . '/../src/routes.php';
+
+// Register Controllers
+// require __DIR__ . '/../src/Controller/*Controller.php';
+$dir = __DIR__ . '/../src/Controller/';
+if ($dh = opendir($dir))
+{
+  while (($file = readdir($dh)) !== false){
+    if (strpos($file, '.php') !== false) {
+      // error_log($file . ' is required');
+      require $dir . $file;
+    }
+  }
+  closedir($dh);
+}
+
+// Register Exceptions
+// require __DIR__ . '/../src/Exception/*Exception.php';
+$dir = __DIR__ . '/../src/Exception/';
+if ($dh = opendir($dir))
+{
+  while (($file = readdir($dh)) !== false){
+    if (strpos($file, '.php') !== false) {
+      // error_log($file . ' is required');
+      require $dir . $file;
+    }
+  }
+  closedir($dh);
+}
+
+// Register Utils
+// require __DIR__ . '/../src/Utils/*Utils.php';
+$dir = __DIR__ . '/../src/Utils/';
+if ($dh = opendir($dir))
+{
+  while (($file = readdir($dh)) !== false){
+    if (strpos($file, '.php') !== false) {
+      // error_log($file . ' is required');
+      require $dir . $file;
+    }
+  }
+  closedir($dh);
+}
+
 
 // Run app
 $app->run();

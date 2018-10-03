@@ -17,3 +17,14 @@ $container['logger'] = function ($c) {
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
 };
+
+$container['database'] = function($c) {
+    $dbconfig = $c->get('settings')['Datasources'];
+    return new \Medoo\Medoo([
+        'database_type' => 'mysql',
+        'database_name' => $dbconfig['name'],
+        'server' => $dbconfig['host'],
+        'username' => $dbconfig['username'],
+        'password' => $dbconfig['password']
+    ]);
+};
