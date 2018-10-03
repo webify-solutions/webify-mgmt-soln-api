@@ -38,7 +38,7 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
   } catch (BadRequestException $e) {
     return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
   } catch (UnauthorizedException $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
+    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
   } catch (Exception $e) {
     return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
   }
