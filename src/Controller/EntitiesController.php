@@ -33,7 +33,7 @@ class EntitiesController
       throw new BadRequestException('User credentials are missing');
     }
 
-    $this->logger->info(json_encode($where));
+    // $this->logger->info(json_encode($where));
 
     $user = $this->database->get(
       'user',
@@ -51,7 +51,7 @@ class EntitiesController
       $where
     );
 
-    $this->logger->info(json_encode($user));
+    // $this->logger->info(json_encode($user));
     // $this->logger->info($user['password']);
     // $this->logger->info($data['password']);
     // $this->logger->info(password_verify($data['password'], $user['password']));
