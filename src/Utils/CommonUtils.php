@@ -13,12 +13,17 @@ use Monolog\Logger;
 
 class CommonUtils
 {
-  function processRequest(Request $request, string $methodName, Medoo $database, Logger $logger)
+  function processRequest(Request $request, string $methodName, Medoo $database, Logger $logger, $useTokenHeader = false)
   {
     $controller = new EntitiesController($database, $logger);
-
     $parsedBody = $request->getParsedBody();
-    $entity = $controller->$methodName($parsedBody);
+
+    if ($useTokenHeader === true) {
+      $token = $request->getHeader('X-Token');
+      $entity = $controller->$methodName($parsedBody, $token);
+    } else {
+      $entity = $controller->$methodName($parsedBody);
+    }
 
     return $entity;
   }
