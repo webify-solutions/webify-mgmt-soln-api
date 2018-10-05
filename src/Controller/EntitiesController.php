@@ -5,7 +5,7 @@ namespace App\Controller;
 use APP\Exception\BadCredentialsException;
 use APP\Exception\BadRequestException;
 use APP\Exception\DatabaseErrorException;
-use APP\Exception\UnauthorizedErrorException;
+use APP\Exception\UnauthorizedException;
 
 use \Medoo\Medoo;
 
@@ -19,6 +19,18 @@ class EntitiesController
   public function __construct(Medoo $database, Logger $logger) {
     $this->database = $database;
     $this->logger = $logger;
+  }
+
+  public function getTokenHeader($request) {
+    // $this->logger->info('Retrieving token header');
+    $token = $request->getHeader('X-Token');
+    $count = sizeof($token);
+    // $this->logger->info('Token header count ' . $count);
+    if ($count !== 1) {
+      throw new BadRequestException('X-Token header is missing');
+    }
+
+    return $token[0];
   }
 
   public function login($data)
@@ -69,7 +81,7 @@ class EntitiesController
       && isset($data['password'])
       && $data['token'] !== $user['mobile_token']
     ) {
-      $this->logger->info('Updating ' . $data['id'] . 'user mobile token');
+      // $this->logger->info('Updating ' . $data['id'] . ' user mobile token');
       $results = $this->database->update(
         'user',
         [
@@ -92,5 +104,33 @@ class EntitiesController
     unset($user['password']);
     unset($user['mobile_token']);
     return $user;
+  }
+
+  public function logout($token)
+  {
+    $this->logger->info('Logging out user mobile token ' . $token);
+    $results = $this->database->update(
+      'user',
+      [
+        'mobile_token' => null
+      ],
+      [
+        'mobile_token' => $token
+      ]
+    );
+    // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
+    if ($this->database->isSuccess($results) === false) {
+      foreach ($this->database->error() as $error) {
+        $this->logger->error($error);
+      }
+
+      throw new DatabaseErrorException(implode("\n",$this->database->error()));
+    }
+
+    if ($results->rowCount() <= 0) {
+        throw new UnauthorizedException('Invalid Token');
+    }
+
+    return ["message" => "Logout successfully"];
   }
 }

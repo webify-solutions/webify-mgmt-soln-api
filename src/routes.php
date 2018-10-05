@@ -5,7 +5,7 @@ use App\Controller\EntitiesController;
 use APP\Exception\BadCredentialsException;
 use APP\Exception\BadRequestException;
 use APP\Exception\DatabaseErrorException;
-use APP\Exception\UnauthorizedErrorException;
+use APP\Exception\UnauthorizedException;
 
 use App\Utils\CommonUtils;
 
@@ -31,7 +31,7 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
   $this->logger->info("Requesting login");
 
   try {
-    $user = CommonUtils::processRequest($request, 'login', $this->database, $this->logger);
+    $user = CommonUtils::processRequest($request, 'login', 'POST', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 401);
@@ -51,7 +51,19 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/logout"), function 
 {
   $this->logger->info("Requesting logout");
 
-  return $response->withStatus(501);
+  try {
+    $message = CommonUtils::processRequest($request, 'logout', 'GET', $this->database, $this->logger, true);
+
+  } catch (BadRequestException $e) {
+    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
+  } catch (UnauthorizedException $e) {
+    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
+  } catch (Exception $e) {
+    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
+  }
+
+  // $this->logger->info(json_encode($message));
+  return CommonUtils::prepareSuccessResponse($response, $message, 200);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/customers"), function (Request $request, Response $response, array $args)

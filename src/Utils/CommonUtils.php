@@ -4,6 +4,8 @@ namespace App\Utils;
 
 use APP\Controller\EntitiesController;
 
+use APP\Exception\BadRequestException;
+
 use Slim\Http\Response;
 use Slim\Http\Request;
 
@@ -13,16 +15,28 @@ use Monolog\Logger;
 
 class CommonUtils
 {
-  function processRequest(Request $request, string $methodName, Medoo $database, Logger $logger, $useTokenHeader = false)
+  static function processRequest(Request $request, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
   {
     $controller = new EntitiesController($database, $logger);
     $parsedBody = $request->getParsedBody();
 
-    if ($useTokenHeader === true) {
-      $token = $request->getHeader('X-Token');
+    if ($httpMethod === 'GET' && $useTokenHeader == true) {
+      // $logger->info('GET Using token header');
+      $token = $controller->getTokenHeader($request);
+      // $logger->info(json_encode($token));
+
+      $entity = $controller->$methodName($token);
+    } else if ($httpMethod !== 'GET' && $useTokenHeader == true) {
+      // $logger->info('Using token header');
+      $token = $controller->getTokenHeader($request);
+      // $logger->info(json_encode($token));
+
       $entity = $controller->$methodName($parsedBody, $token);
-    } else {
+    } else if ($httpMethod !== 'GET') {
+      // $logger->info('Not using token header');
       $entity = $controller->$methodName($parsedBody);
+    } else {
+      $entity = $controller->$methodName();
     }
 
     return $entity;
