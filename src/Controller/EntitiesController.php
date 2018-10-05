@@ -24,7 +24,7 @@ class EntitiesController
   public function login($data)
   {
     $where = ['active'=> true];
-    if (isset($data['login_name']) && isset($data['password'])) {
+    if (isset($data['login_name']) && isset($data['password']) && isset($data['token'])) {
       $where['login_name'] = $data['login_name'];
       // $where['password'] = $data['password'];
     } else if (isset($data['token'])) {
@@ -33,7 +33,9 @@ class EntitiesController
       throw new BadRequestException('User credentials are missing');
     }
 
-    $users = $this->database->select(
+    $this->logger->info(json_encode($where));
+
+    $user = $this->database->get(
       'user',
       [
         'id',
@@ -41,6 +43,7 @@ class EntitiesController
         'login_name',
         'name',
         'password',
+        'mobile_token',
         'phone',
         'email',
         'role'
@@ -48,34 +51,46 @@ class EntitiesController
       $where
     );
 
-    // $this->logger->info($users === []);
-    // $this->logger->info($users[0]['password']);
+    $this->logger->info(json_encode($user));
+    // $this->logger->info($user['password']);
     // $this->logger->info($data['password']);
-    // $this->logger->info(password_verify($data['password'], $users[0]['password']));
-    if ($users === [] || password_verify($data['password'], $users[0]['password']) === false) {
+    // $this->logger->info(password_verify($data['password'], $user['password']));
+    if (
+      $user == null || (
+          isset($data['password'])
+          && password_verify($data['password'], $user['password']) === false
+        )
+    ) {
       throw new BadCredentialsException('Invalid Credentials');
     }
 
-    $user = $users[0];
-    // $this->logger->info(json_encode($user));
-    $results = $this->database->update(
-      'user',
-      [
-        'mobile_token' => $data['token']
-      ],
-      [
-        'id' => $user['id']
-      ]
-    );
-    // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
-    if ($this->database->isSuccess($results) === false) {
-      foreach ($this->database->error() as $error) {
-        $this->logger->error($error);
-      }
+    if (
+      isset($data['login_name'])
+      && isset($data['password'])
+      && $data['token'] !== $user['mobile_token']
+    ) {
+      $this->logger->info('Updating ' . $data['id'] . 'user mobile token');
+      $results = $this->database->update(
+        'user',
+        [
+          'mobile_token' => $data['token']
+        ],
+        [
+          'id' => $user['id']
+        ]
+      );
+      // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
+      if ($this->database->isSuccess($results) === false) {
+        foreach ($this->database->error() as $error) {
+          $this->logger->error($error);
+        }
 
-      throw new DatabaseErrorException(implode("\n",$this->database->error()));
+        throw new DatabaseErrorException(implode("\n",$this->database->error()));
+      }
     }
 
+    unset($user['password']);
+    unset($user['mobile_token']);
     return $user;
   }
 }
