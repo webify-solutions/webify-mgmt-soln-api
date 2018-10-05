@@ -2,7 +2,7 @@
 
 namespace App\Utils;
 
-use APP\Controller\EntitiesController;
+use APP\Controller\ApiController;
 
 use APP\Exception\BadRequestException;
 
@@ -17,7 +17,7 @@ class CommonUtils
 {
   static function processRequest(Request $request, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
   {
-    $controller = new EntitiesController($database, $logger);
+    $controller = new ApiController($database, $logger);
     $parsedBody = $request->getParsedBody();
 
     if ($httpMethod === 'GET' && $useTokenHeader == true) {

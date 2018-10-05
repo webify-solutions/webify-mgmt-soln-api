@@ -1,6 +1,6 @@
 <?php
 
-use App\Controller\EntitiesController;
+use App\Controller\ApiController;
 
 use APP\Exception\BadCredentialsException;
 use APP\Exception\BadRequestException;

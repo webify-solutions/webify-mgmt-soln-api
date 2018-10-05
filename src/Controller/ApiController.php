@@ -11,7 +11,7 @@ use \Medoo\Medoo;
 
 use Monolog\Logger;
 
-class EntitiesController
+class ApiController
 {
   protected $database;
   protected $logger;
@@ -44,28 +44,16 @@ class EntitiesController
     } else {
       throw new BadRequestException('User credentials are missing');
     }
-
     // $this->logger->info(json_encode($where));
 
     $user = $this->database->get(
       'user',
-      [
-        'id',
-        'organization_id',
-        'login_name',
-        'name',
-        'password',
-        'mobile_token',
-        'phone',
-        'email',
-        'role'
-      ],
+      ['id', 'organization_id', 'login_name', 'name', 'password', 'mobile_token',
+        'phone', 'email', 'role'],
       $where
     );
 
     // $this->logger->info(json_encode($user));
-    // $this->logger->info($user['password']);
-    // $this->logger->info($data['password']);
     // $this->logger->info(password_verify($data['password'], $user['password']));
     if (
       $user == null || (
@@ -84,23 +72,17 @@ class EntitiesController
       // $this->logger->info('Updating ' . $data['id'] . ' user mobile token');
       $results = $this->database->update(
         'user',
-        [
-          'mobile_token' => $data['token']
-        ],
-        [
-          'id' => $user['id']
-        ]
+        ['mobile_token' => $data['token']],
+        ['id' => $user['id']]
       );
       // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
       if ($this->database->isSuccess($results) === false) {
         foreach ($this->database->error() as $error) {
           $this->logger->error($error);
         }
-
         throw new DatabaseErrorException(implode("\n",$this->database->error()));
       }
     }
-
     unset($user['password']);
     unset($user['mobile_token']);
     return $user;
@@ -110,27 +92,19 @@ class EntitiesController
   {
     $this->logger->info('Logging out user mobile token ' . $token);
     $results = $this->database->update(
-      'user',
-      [
-        'mobile_token' => null
-      ],
-      [
-        'mobile_token' => $token
-      ]
+      'user', ['mobile_token' => null], ['mobile_token' => $token]
     );
     // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
     if ($this->database->isSuccess($results) === false) {
       foreach ($this->database->error() as $error) {
         $this->logger->error($error);
       }
-
       throw new DatabaseErrorException(implode("\n",$this->database->error()));
     }
 
     if ($results->rowCount() <= 0) {
         throw new UnauthorizedException('Invalid Token');
     }
-
     return ["message" => "Logout successfully"];
   }
 }
