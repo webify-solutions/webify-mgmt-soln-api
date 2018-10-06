@@ -13,30 +13,34 @@ use \Medoo\Medoo;
 
 use Monolog\Logger;
 
-class CommonUtils
+class RoutersCommonUtils
 {
   static function processRequest(Request $request, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
   {
     $controller = new ApiController($database, $logger);
-    $parsedBody = $request->getParsedBody();
-
     if ($httpMethod === 'GET' && $useTokenHeader == true) {
       // $logger->info('GET Using token header');
       $token = $controller->getTokenHeader($request);
       // $logger->info(json_encode($token));
+      $queryParams = $request->getQueryParams();
+      // $logger->info(json_encode($queryParams))
+      $entity = $controller->$methodName($queryParams, $token);
 
-      $entity = $controller->$methodName($token);
     } else if ($httpMethod !== 'GET' && $useTokenHeader == true) {
       // $logger->info('Using token header');
       $token = $controller->getTokenHeader($request);
       // $logger->info(json_encode($token));
-
+      $parsedBody = $request->getParsedBody();
       $entity = $controller->$methodName($parsedBody, $token);
+
     } else if ($httpMethod !== 'GET') {
       // $logger->info('Not using token header');
+      $parsedBody = $request->getParsedBody();
       $entity = $controller->$methodName($parsedBody);
     } else {
-      $entity = $controller->$methodName();
+      $queryParams = $request->getQueryParams();
+      // $logger->info(json_encode($queryParams))
+      $entity = $controller->$methodName($queryParams);
     }
 
     return $entity;

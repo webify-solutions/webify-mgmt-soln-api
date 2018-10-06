@@ -7,6 +7,8 @@ use APP\Exception\BadRequestException;
 use APP\Exception\DatabaseErrorException;
 use APP\Exception\UnauthorizedException;
 
+use App\Utils\ControllersCommonUtils;
+
 use \Medoo\Medoo;
 
 use Monolog\Logger;
@@ -21,7 +23,8 @@ class ApiController
     $this->logger = $logger;
   }
 
-  public function getTokenHeader($request) {
+  public function getTokenHeader($request)
+  {
     // $this->logger->info('Retrieving token header');
     $token = $request->getHeader('X-Token');
     $count = sizeof($token);
@@ -52,6 +55,7 @@ class ApiController
         'phone', 'email', 'role'],
       $where
     );
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $user, $this->logger);
 
     // $this->logger->info(json_encode($user));
     // $this->logger->info(password_verify($data['password'], $user['password']));
@@ -75,13 +79,7 @@ class ApiController
         ['mobile_token' => $data['token']],
         ['id' => $user['id']]
       );
-      // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
-      if ($this->database->isSuccess($results) === false) {
-        foreach ($this->database->error() as $error) {
-          $this->logger->error($error);
-        }
-        throw new DatabaseErrorException(implode("\n",$this->database->error()));
-      }
+      ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
     }
     unset($user['password']);
     unset($user['mobile_token']);
@@ -94,17 +92,31 @@ class ApiController
     $results = $this->database->update(
       'user', ['mobile_token' => null], ['mobile_token' => $token]
     );
-    // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
-    if ($this->database->isSuccess($results) === false) {
-      foreach ($this->database->error() as $error) {
-        $this->logger->error($error);
-      }
-      throw new DatabaseErrorException(implode("\n",$this->database->error()));
-    }
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
 
     if ($results->rowCount() <= 0) {
         throw new UnauthorizedException('Invalid Token');
     }
     return ["message" => "Logout successfully"];
+  }
+
+  public function getCustomers($queryParams, $token) {
+    $user = $this->login(["token" => $token]);
+    // $this->logger->info(json_encode($user));
+    if ($user['role'] === 'Customer') {
+      throw new UnauthorizedException("You're not authorized to access this resource");
+    }
+
+    $organizationId = $user['organization_id'];
+    $this->logger->info($organizationId);
+    $customers = $this->database->select(
+      'customer',
+      ['id', "customer_name" =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
+      ['organization_id' => $organizationId]
+    );
+    $this->logger->info(json_encode($customers));
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $customers, $this->logger);
+
+    return $customers;
   }
 }

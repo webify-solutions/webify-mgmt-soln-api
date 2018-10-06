@@ -7,7 +7,7 @@ use APP\Exception\BadRequestException;
 use APP\Exception\DatabaseErrorException;
 use APP\Exception\UnauthorizedException;
 
-use App\Utils\CommonUtils;
+use App\Utils\RoutersCommonUtils;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
@@ -31,20 +31,20 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
   $this->logger->info("Requesting login");
 
   try {
-    $user = CommonUtils::processRequest($request, 'login', 'POST', $this->database, $this->logger);
+    $user = RoutersCommonUtils::processRequest($request, 'login', 'POST', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 401);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401);
   } catch (BadRequestException $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
   } catch (UnauthorizedException $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
   } catch (Exception $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
   }
 
   // $this->logger->info(json_encode($user));
-  return CommonUtils::prepareSuccessResponse($response, $user, 200);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $user, 200);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/logout"), function (Request $request, Response $response, array $args)
@@ -52,25 +52,37 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/logout"), function 
   $this->logger->info("Requesting logout");
 
   try {
-    $message = CommonUtils::processRequest($request, 'logout', 'GET', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, 'logout', 'GET', $this->database, $this->logger, true);
 
   } catch (BadRequestException $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
   } catch (UnauthorizedException $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
   } catch (Exception $e) {
-    return CommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
   }
 
   // $this->logger->info(json_encode($message));
-  return CommonUtils::prepareSuccessResponse($response, $message, 200);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/customers"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Requesting customers");
 
-  return $response->withStatus(501);
+  try {
+    $message = RoutersCommonUtils::processRequest($request, 'getCustomers', 'GET', $this->database, $this->logger, true);
+
+  } catch (BadRequestException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 400);
+  } catch (UnauthorizedException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 403);
+  } catch (Exception $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 500);
+  }
+
+  // $this->logger->info(json_encode($message));
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/products"), function (Request $request, Response $response, array $args)
