@@ -9,6 +9,7 @@ use APP\Exception\UnauthorizedException;
 
 use App\Utils\ControllersCommonUtils;
 
+use PDO;
 use \Medoo\Medoo;
 
 use Monolog\Logger;
@@ -21,19 +22,6 @@ class ApiController
   public function __construct(Medoo $database, Logger $logger) {
     $this->database = $database;
     $this->logger = $logger;
-  }
-
-  public function getTokenHeader($request)
-  {
-    // $this->logger->info('Retrieving token header');
-    $token = $request->getHeader('X-Token');
-    $count = sizeof($token);
-    // $this->logger->info('Token header count ' . $count);
-    if ($count !== 1) {
-      throw new BadRequestException('X-Token header is missing');
-    }
-
-    return $token[0];
   }
 
   public function login($data)
@@ -103,20 +91,56 @@ class ApiController
   public function getCustomers($queryParams, $token) {
     $user = $this->login(["token" => $token]);
     // $this->logger->info(json_encode($user));
-    if ($user['role'] === 'Customer') {
+    if (in_array($user['role'], ['Admin', 'Technician']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
 
-    $organizationId = $user['organization_id'];
-    $this->logger->info($organizationId);
+    // $this->logger->info($organizationId);
     $customers = $this->database->select(
       'customer',
       ['id', "customer_name" =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
-      ['organization_id' => $organizationId]
+      ['organization_id' => $user['organization_id']]
     );
-    $this->logger->info(json_encode($customers));
+    // $this->logger->info(json_encode($customers));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $customers, $this->logger);
 
     return $customers;
+  }
+
+  public function getProducts($queryParams, $token) {
+    $user = $this->login(["token" => $token]);
+    if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
+      throw new UnauthorizedException("You're not authorized to access this resource");
+    }
+
+    $customerNumber = null;
+    // $this->logger->info($user['role'] == 'Customer'? 'true' : 'false');
+    if ($user['role'] === 'Customer') {
+      $customerNumber = $user['login_name'];
+    } else {
+      $customerNumber = $queryParams['customer_number'];
+      if ($customerNumber === null) {
+        throw new BadCredentialsException("customer_number query parameter is missing");
+      }
+    }
+
+    $organizationId = $user['organization_id'];
+    $queryString = "
+      SELECT p.id, p.name AS product_name, MAX(o.order_date) AS ordered_date
+      FROM product p
+      INNER JOIN order_item oi ON (oi.product_id = p.id)
+      INNER JOIN `order` o on (o.id = oi.order_id)
+      INNER JOIN customer c on (c.id = o.customer_id)
+      WHERE c.customer_number = '" . $customerNumber . "' AND p.organization_id = " . $organizationId . "
+      GROUP BY p.id, p.name;";
+    // $this->logger->info($queryString);
+    $productQuery = $this->database->query($queryString);
+
+    $products = $productQuery->fetchAll(PDO::FETCH_ASSOC);
+
+    // $this->logger->info(json_encode($products));
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $products, $this->logger);
+
+    return $products;
   }
 }

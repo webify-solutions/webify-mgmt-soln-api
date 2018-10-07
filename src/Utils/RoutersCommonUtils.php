@@ -15,48 +15,48 @@ use Monolog\Logger;
 
 class RoutersCommonUtils
 {
+  static function getTokenHeader($request)
+  {
+    // $this->logger->info('Retrieving token header');
+    $token = $request->getHeader('X-Token');
+    $count = sizeof($token);
+    // $this->logger->info('Token header count ' . $count);
+    if ($count !== 1) {
+      throw new BadRequestException('X-Token header is missing');
+    }
+
+    return $token[0];
+  }
+
   static function processRequest(Request $request, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
   {
     $controller = new ApiController($database, $logger);
     if ($httpMethod === 'GET' && $useTokenHeader == true) {
       // $logger->info('GET Using token header');
-      $token = $controller->getTokenHeader($request);
-      // $logger->info(json_encode($token));
-      $queryParams = $request->getQueryParams();
-      // $logger->info(json_encode($queryParams))
-      $entity = $controller->$methodName($queryParams, $token);
+      $entity = $controller->$methodName($request->getQueryParams(), RoutersCommonUtils::getTokenHeader($request));
 
     } else if ($httpMethod !== 'GET' && $useTokenHeader == true) {
       // $logger->info('Using token header');
-      $token = $controller->getTokenHeader($request);
-      // $logger->info(json_encode($token));
-      $parsedBody = $request->getParsedBody();
-      $entity = $controller->$methodName($parsedBody, $token);
+      $entity = $controller->$methodName($request->getParsedBody(), RoutersCommonUtils::getTokenHeader($request));
 
     } else if ($httpMethod !== 'GET') {
       // $logger->info('Not using token header');
-      $parsedBody = $request->getParsedBody();
-      $entity = $controller->$methodName($parsedBody);
+      $entity = $controller->$methodName($request->getParsedBody());
     } else {
-      $queryParams = $request->getQueryParams();
       // $logger->info(json_encode($queryParams))
-      $entity = $controller->$methodName($queryParams);
+      $entity = $controller->$methodName($request->getQueryParams());
     }
 
     return $entity;
   }
 
-  static function prepareErrorResponse(Response $response, string $message, int $httpStatusCode)
+  static function prepareErrorResponse(Response $response, string $message, int $httpStatusCode, $loggers)
   {
-    return $response
-            ->withJson(["message" => $message])
-            ->withStatus($httpStatusCode);
+    return $response->withJson(["message" => $message], $httpStatusCode);
   }
 
-  static function prepareSuccessResponse(Response $response, array $data, int $httpStatusCode)
+  static function prepareSuccessResponse(Response $response, array $data, int $httpStatusCode, $logger)
   {
-    return $response
-            ->withJson($data)
-            ->withStatus($httpStatusCode);
+    return $response->withJson($data, $httpStatusCode);
   }
 }

@@ -15,7 +15,8 @@ use Monolog\Logger;
 
 class ControllersCommonUtils
 {
-  public static function validateDatabaseExecResults($database, $results, $logger) {
+  public static function validateDatabaseExecResults($database, $results, $logger)
+  {
     // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
     if ($database->isSuccess($results) === false) {
       foreach ($database->error() as $error) {
@@ -26,6 +27,4 @@ class ControllersCommonUtils
 
     return;
   }
-
-
 }
