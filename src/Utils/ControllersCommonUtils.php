@@ -27,4 +27,22 @@ class ControllersCommonUtils
 
     return;
   }
+
+  public static function resultsFilter($results, $logger) {
+    $newResults = [];
+    // $logger->info('Filter the results: ' . json_encode($results));
+    foreach ($results as $result) {
+      $newResult = [];
+      foreach ($result as $key => $value) {
+        if ($value !== null) {
+          $newResult[$key] = $value;
+        }
+      }
+      if ($newResult !== []) {
+        $newResults[] = $newResult;
+      }
+    }
+
+    return $newResults;
+  }
 }

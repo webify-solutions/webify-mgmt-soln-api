@@ -108,6 +108,7 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/products"), functio
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/technicians"), function (Request $request, Response $response, array $args)
 {
+  $this->logger-info('Requesting technicians');
   try {
     $products = RoutersCommonUtils::processRequest($request, 'getTechnicians', 'GET', $this->database, $this->logger, true);
 
@@ -128,8 +129,21 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/technicians"), func
 $app->get(str_replace("{base_path}", base_path, "{base_path}/issues"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Requesting issues");
+  try {
+    $issues = RoutersCommonUtils::processRequest($request, 'getIssues', 'GET', $this->database, $this->logger, true);
 
-  return $response->withStatus(501);
+  } catch (BadCredentialsException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
+  } catch (BadRequestException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 400, $this->logger);
+  } catch (UnauthorizedException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 403, $this->logger);
+  } catch (Exception $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 500, $this->logger);
+  }
+
+  // $this->logger->info(json_encode($message));
+  return RoutersCommonUtils::prepareSuccessResponse($response, $issues, 200, $this->logger);
 });
 
 $app->post(str_replace("{base_path}", base_path, "{base_path}/issues"), function (Request $request, Response $response, array $args)

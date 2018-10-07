@@ -85,12 +85,12 @@ class ApiController
     if ($results->rowCount() <= 0) {
         throw new UnauthorizedException('Invalid Token');
     }
-    return ["message" => "Logout successfully"];
+    return ['message' => 'Logout successfully'];
   }
 
   public function getCustomers($queryParams, $token)
   {
-    $user = $this->login(["token" => $token]);
+    $user = $this->login(['token' => $token]);
     // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
@@ -99,7 +99,7 @@ class ApiController
     // $this->logger->info($organizationId);
     $customers = $this->database->select(
       'customer',
-      ['id', "customer_name" =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
+      ['id', 'customer_name' =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
       ['organization_id' => $user['organization_id']]
     );
     // $this->logger->info(json_encode($customers));
@@ -110,7 +110,7 @@ class ApiController
 
   public function getProducts($queryParams, $token)
   {
-    $user = $this->login(["token" => $token]);
+    $user = $this->login(['token' => $token]);
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
@@ -122,7 +122,7 @@ class ApiController
     } else {
       $customerNumber = $queryParams['customer_number'];
       if ($customerNumber === null) {
-        throw new BadCredentialsException("customer_number query parameter is missing");
+        throw new BadCredentialsException('customer_number query parameter is missing');
       }
     }
 
@@ -148,9 +148,9 @@ class ApiController
 
   public function getTechnicians($queryParams, $token)
   {
-    $user = $this->login(["token" => $token]);
+    $user = $this->login(['token' => $token]);
     // $this->logger->info(json_encode($user));
-    if (in_array($user['role'], ['Admin', 'Technician']) === false) {
+    if (in_array($user['role'], ['Admin']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
 
@@ -165,5 +165,37 @@ class ApiController
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $technicians, $this->logger);
 
     return $technicians;
+  }
+
+  public function getIssues($queryParams, $token) {
+    $user = $this->login(['token' => $token]);
+    // $this->logger->info(json_encode($user));
+    if (in_array($user['role'], ['Admin', 'Technician']) === false) {
+      throw new UnauthorizedException("You're not authorized to access this resource");
+    }
+
+    $organization_id = $user['organization_id'];
+    $queryString = "
+      SELECT i.id, i.`subject` AS title, i.description, i.customer_id, CONCAT(customer_number, ' : ', c.`name`) AS customer_name, i.product_id, p.`name` AS product_name, o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`
+      FROM issues i
+      INNER JOIN customer c ON (c.id = i.customer_id)
+      INNER JOIN product p ON (p.id = i.product_id)
+      INNER JOIN order_item oi ON (oi.product_id = p.id)
+      INNER JOIN `order` o ON (o.id = oi.order_id)
+      LEFT JOIN user t ON (t.id = i.technician_id)
+      WHERE i.organization_id = " . $organization_id ."
+      GROUP BY customer_id, product_id";
+
+    // $this->logger->info($queryString);
+    $issuesQuery = $this->database->query($queryString);
+
+    $issues = $issuesQuery->fetchAll(PDO::FETCH_ASSOC);
+
+    // $this->logger->info('Query results: ' . json_encode($issues));
+    // $this->logger->info(json_encode($products));
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $issues, $this->logger);
+
+    // $this->logger->info('Filtered Query results: ' . ControllersCommonUtils::resultsFilter($issues, $this->logger));
+    return  ControllersCommonUtils::resultsFilter($issues, $this->logger);
   }
 }
