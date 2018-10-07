@@ -88,7 +88,8 @@ class ApiController
     return ["message" => "Logout successfully"];
   }
 
-  public function getCustomers($queryParams, $token) {
+  public function getCustomers($queryParams, $token)
+  {
     $user = $this->login(["token" => $token]);
     // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician']) === false) {
@@ -107,7 +108,8 @@ class ApiController
     return $customers;
   }
 
-  public function getProducts($queryParams, $token) {
+  public function getProducts($queryParams, $token)
+  {
     $user = $this->login(["token" => $token]);
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
@@ -142,5 +144,26 @@ class ApiController
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $products, $this->logger);
 
     return $products;
+  }
+
+  public function getTechnicians($queryParams, $token)
+  {
+    $user = $this->login(["token" => $token]);
+    // $this->logger->info(json_encode($user));
+    if (in_array($user['role'], ['Admin', 'Technician']) === false) {
+      throw new UnauthorizedException("You're not authorized to access this resource");
+    }
+
+    // $this->logger->info($organizationId);
+    $technicians = $this->database->select(
+      'user',
+      ['id', 'name(technician_name)'],
+      ['organization_id' => $user['organization_id'], 'role' => 'Technician']
+    );
+
+    // $this->logger->info(json_encode($customers));
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $technicians, $this->logger);
+
+    return $technicians;
   }
 }
