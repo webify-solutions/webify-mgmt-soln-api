@@ -71,6 +71,9 @@ if ($dh = opendir($dir))
   closedir($dh);
 }
 
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: X-Token');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
 
 // Run app
 $app->run();
