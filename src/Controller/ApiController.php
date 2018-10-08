@@ -26,7 +26,7 @@ class ApiController
 
   public function login($data)
   {
-    $where = ['active'=> true];
+    $where = ['user.active'=> true];
     if (isset($data['login_name']) && isset($data['password']) && isset($data['token'])) {
       $where['login_name'] = $data['login_name'];
       // $where['password'] = $data['password'];
@@ -36,13 +36,17 @@ class ApiController
       throw new BadRequestException('User credentials are missing');
     }
     // $this->logger->info(json_encode($where));
-
     $user = $this->database->get(
       'user',
-      ['id', 'organization_id', 'login_name', 'name', 'password', 'mobile_token',
-        'phone', 'email', 'role'],
+      [
+        '[>]customer' => ['login_name' => 'customer_number']
+      ],
+      ['user.id', 'user.organization_id', 'login_name', 'user.name', 'password', 'mobile_token',
+        'user.phone', 'user.email', 'role', 'customer.id(customer_id)'],
       $where
     );
+
+    // $this->logger->info(json_encode( $this->database->log() ));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $user, $this->logger);
 
     // $this->logger->info(json_encode($user));
@@ -122,7 +126,7 @@ class ApiController
     } else {
       $customerNumber = $queryParams['customer_number'];
       if ($customerNumber === null) {
-        throw new BadCredentialsException('customer_number query parameter is missing');
+        throw new BadRequestException('customer_number query parameter is missing');
       }
     }
 
@@ -170,32 +174,80 @@ class ApiController
   public function getIssues($queryParams, $token) {
     $user = $this->login(['token' => $token]);
     // $this->logger->info(json_encode($user));
-    if (in_array($user['role'], ['Admin', 'Technician']) === false) {
+    if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
 
+    if ($user['customer_id'] !== null) {
+      $customer_id = $user['customer_id'];
+    }
     $organization_id = $user['organization_id'];
     $queryString = "
-      SELECT i.id, i.`subject` AS title, i.description, i.customer_id, CONCAT(customer_number, ' : ', c.`name`) AS customer_name, i.product_id, p.`name` AS product_name, o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`
+      SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
+        CONCAT(customer_number, ' : ', c.`name`) AS customer_name, i.product_id,
+        p.`name` AS product_name, o.order_date as ordered_date,  i.technician_id,
+        t.`name` as technician_name, i.`status`
       FROM issues i
       INNER JOIN customer c ON (c.id = i.customer_id)
       INNER JOIN product p ON (p.id = i.product_id)
       INNER JOIN order_item oi ON (oi.product_id = p.id)
       INNER JOIN `order` o ON (o.id = oi.order_id)
       LEFT JOIN user t ON (t.id = i.technician_id)
-      WHERE i.organization_id = " . $organization_id ."
-      GROUP BY customer_id, product_id";
+      WHERE i.organization_id = " . $organization_id;
 
-    // $this->logger->info($queryString);
+    if (isset($customer_id)) {
+      $queryString .= " AND i.customer_id = " . $customer_id;
+    }
+    $queryString .= " GROUP BY i.id";
+
+    $this->logger->info($queryString);
     $issuesQuery = $this->database->query($queryString);
-
     $issues = $issuesQuery->fetchAll(PDO::FETCH_ASSOC);
+    // $this->logger->info(json_encode($this->database->log()));
 
     // $this->logger->info('Query results: ' . json_encode($issues));
     // $this->logger->info(json_encode($products));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $issues, $this->logger);
 
-    // $this->logger->info('Filtered Query results: ' . ControllersCommonUtils::resultsFilter($issues, $this->logger));
-    return  ControllersCommonUtils::resultsFilter($issues, $this->logger);
+    // $this->logger->info('Filtered Query results: ' . ControllersCommonUtils::skipOnNull($issues, $this->logger));
+    return  ControllersCommonUtils::skipOnNull($issues, $this->logger);
+  }
+
+  public function createIssue($data, $token)
+  {
+    $user = $this->login(['token' => $token]);
+    $this->logger->info(json_encode($user));
+    if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
+      throw new UnauthorizedException("You're not authorized to access this resource");
+    }
+
+    $organization_id = $user['organization_id'];
+    // Data mapping
+    $dataMapping = [];
+    $dataMapping['organization_id'] = $organization_id;
+
+    if ($user['customer_id'] !== null) {
+      $dataMapping['customer_id'] = $user['customer_id'];
+    } else if (isset($data['customer_id'])) {
+      $dataMapping['customer_id'] = $data['customer_id'];
+    } else {
+      throw new BadRequestException('customer_number field is missing in the JSON request');
+    }
+
+    if (isset($data['subject'])) { $dataMapping['title'] = $data['title']; }
+    if (isset($data['description'])) { $dataMapping['description'] = $data['description']; }
+    if (isset($data['product_id'])) { $dataMapping['product_id'] = $data['product_id']; }
+    if (isset($data['technician_id'])) { $dataMapping['technician_id'] = $data['technician_id']; }
+    if (isset($data['status'])) { $dataMapping['status'] = $data['status']; }
+
+    // $this->logger->info(json_encode($dataMapping));
+    $results = $this->database->insert("issues",
+      $dataMapping
+    );
+    // $this->logger->info('Query results: ' . json_encode($issues));
+    // $this->logger->info(json_encode($products));
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
+    $data['id'] = $this->database->id();
+    return $data;
   }
 }

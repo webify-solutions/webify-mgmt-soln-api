@@ -5,6 +5,7 @@ namespace App\Utils;
 use APP\Controller\ApiController;
 
 use APP\Exception\BadRequestException;
+use APP\Exception\DatabaseErrorException;
 
 use Slim\Http\Response;
 use Slim\Http\Request;
@@ -17,18 +18,19 @@ class ControllersCommonUtils
 {
   public static function validateDatabaseExecResults($database, $results, $logger)
   {
-    // $this->logger->info($this->database->isSuccess($results) === false ? 'false' : 'true');
-    if ($database->isSuccess($results) === false) {
-      foreach ($database->error() as $error) {
+    $errorDump = $database->error();
+    if (isset($errorDump[0]) && $errorDump[0] !== '00000') {
+      foreach ($errorDump as $error) {
         $logger->error($error);
       }
-      throw new DatabaseErrorException(implode("\n",$database->error()));
+
+      throw new DatabaseErrorException('Error occured, please contact your adminstrator');
     }
 
     return;
   }
 
-  public static function resultsFilter($results, $logger) {
+  public static function skipOnNull($results, $logger) {
     $newResults = [];
     // $logger->info('Filter the results: ' . json_encode($results));
     foreach ($results as $result) {
@@ -38,6 +40,7 @@ class ControllersCommonUtils
           $newResult[$key] = $value;
         }
       }
+      
       if ($newResult !== []) {
         $newResults[] = $newResult;
       }

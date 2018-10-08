@@ -149,8 +149,21 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/issues"), function 
 $app->post(str_replace("{base_path}", base_path, "{base_path}/issues"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Posting issue");
+  try {
+    $user = RoutersCommonUtils::processRequest($request, 'createIssue', 'POST', $this->database, $this->logger, true);
 
-  return $response->withStatus(501);
+  } catch (BadCredentialsException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
+  } catch (BadRequestException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 400, $this->logger);
+  } catch (UnauthorizedException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 403, $this->logger);
+  } catch (Exception $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 500, $this->logger);
+  }
+
+  // $this->logger->info(json_encode($user));
+  return RoutersCommonUtils::prepareSuccessResponse($response, $user, 201, $this->logger);
 });
 
 $app->patch(str_replace("{base_path}", base_path, "{base_path}/issues/{issue_id}"), function (Request $request, Response $response, array $args)
