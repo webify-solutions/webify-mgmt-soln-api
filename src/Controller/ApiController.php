@@ -234,7 +234,7 @@ class ApiController
       throw new BadRequestException('customer_number field is missing in the JSON request');
     }
 
-    if (isset($data['subject'])) { $dataMapping['title'] = $data['title']; }
+    if (isset($data['title'])) { $dataMapping['subject'] = $data['title']; }
     if (isset($data['description'])) { $dataMapping['description'] = $data['description']; }
     if (isset($data['product_id'])) { $dataMapping['product_id'] = $data['product_id']; }
     if (isset($data['technician_id'])) { $dataMapping['technician_id'] = $data['technician_id']; }
@@ -271,7 +271,7 @@ class ApiController
       throw new BadRequestException("Can't update the product issue in the JSON request");
     }
 
-    if (isset($data['subject'])) { $dataMapping['title'] = $data['title']; }
+    if (isset($data['title'])) { $dataMapping['subject'] = $data['title']; }
     if (isset($data['description'])) { $dataMapping['description'] = $data['description']; }
     if (isset($data['technician_id'])) { $dataMapping['technician_id'] = $data['technician_id']; }
     if (isset($data['status'])) { $dataMapping['status'] = $data['status']; }
