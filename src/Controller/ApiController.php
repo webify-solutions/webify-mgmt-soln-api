@@ -24,7 +24,7 @@ class ApiController
     $this->logger = $logger;
   }
 
-  public function login($data)
+  public function login($data, $args = null)
   {
     $where = ['user.active'=> true];
     if (isset($data['login_name']) && isset($data['password']) && isset($data['token'])) {
@@ -78,9 +78,9 @@ class ApiController
     return $user;
   }
 
-  public function logout($token)
+  public function logout($queryParams, $args, $token)
   {
-    $this->logger->info('Logging out user mobile token ' . $token);
+    // $this->logger->info('Logging out user mobile token ' . $token);
     $results = $this->database->update(
       'user', ['mobile_token' => null], ['mobile_token' => $token]
     );
@@ -92,7 +92,7 @@ class ApiController
     return ['message' => 'Logout successfully'];
   }
 
-  public function getCustomers($queryParams, $token)
+  public function getCustomers($queryParams, array $args, $token)
   {
     $user = $this->login(['token' => $token]);
     // $this->logger->info(json_encode($user));
@@ -103,7 +103,7 @@ class ApiController
     // $this->logger->info($organizationId);
     $customers = $this->database->select(
       'customer',
-      ['id', 'customer_name' =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
+      ['id', 'customer_number(login_name)', 'customer_name' =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
       ['organization_id' => $user['organization_id']]
     );
     // $this->logger->info(json_encode($customers));
@@ -112,7 +112,7 @@ class ApiController
     return $customers;
   }
 
-  public function getProducts($queryParams, $token)
+  public function getProducts($queryParams, array $args, $token)
   {
     $user = $this->login(['token' => $token]);
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
@@ -150,7 +150,7 @@ class ApiController
     return $products;
   }
 
-  public function getTechnicians($queryParams, $token)
+  public function getTechnicians($queryParams, array $args, $token)
   {
     $user = $this->login(['token' => $token]);
     // $this->logger->info(json_encode($user));
@@ -171,7 +171,7 @@ class ApiController
     return $technicians;
   }
 
-  public function getIssues($queryParams, $token) {
+  public function getIssues($queryParams, array $args, $token) {
     $user = $this->login(['token' => $token]);
     // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
@@ -213,10 +213,10 @@ class ApiController
     return  ControllersCommonUtils::skipOnNull($issues, $this->logger);
   }
 
-  public function createIssue($data, $token)
+  public function createIssue($data, array $args, $token)
   {
     $user = $this->login(['token' => $token]);
-    $this->logger->info(json_encode($user));
+    // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
@@ -248,6 +248,44 @@ class ApiController
     // $this->logger->info(json_encode($products));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
     $data['id'] = $this->database->id();
+    return $data;
+  }
+
+  public function updateIssue($data, array $args, $token)
+  {
+    $user = $this->login(['token' => $token]);
+    // $this->logger->info(json_encode($user));
+    if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
+      throw new UnauthorizedException("You're not authorized to access this resource");
+    }
+
+    $organization_id = $user['organization_id'];
+    // Data mapping
+    $dataMapping = [];
+    $dataMapping['organization_id'] = $organization_id;
+
+    if (isset($data['customer_id'])) {
+      throw new BadRequestException("Can't update the customer issue in the JSON request");
+    }
+    if (isset($data['product_id'])) {
+      throw new BadRequestException("Can't update the product issue in the JSON request");
+    }
+
+    if (isset($data['subject'])) { $dataMapping['title'] = $data['title']; }
+    if (isset($data['description'])) { $dataMapping['description'] = $data['description']; }
+    if (isset($data['technician_id'])) { $dataMapping['technician_id'] = $data['technician_id']; }
+    if (isset($data['status'])) { $dataMapping['status'] = $data['status']; }
+
+    // $this->logger->info(json_encode($dataMapping));
+    $results = $this->database->update("issues",
+      $dataMapping,
+      [
+        'id' => $args['issue_id']
+      ]
+    );
+    // $this->logger->info('Query results: ' . json_encode($issues));
+    // $this->logger->info(json_encode($products));
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
     return $data;
   }
 }

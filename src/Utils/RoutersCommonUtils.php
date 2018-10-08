@@ -28,23 +28,23 @@ class RoutersCommonUtils
     return $token[0];
   }
 
-  static function processRequest(Request $request, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
+  static function processRequest(Request $request, array $args, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
   {
     $controller = new ApiController($database, $logger);
     if ($httpMethod === 'GET' && $useTokenHeader == true) {
       // $logger->info('GET Using token header');
-      $entity = $controller->$methodName($request->getQueryParams(), RoutersCommonUtils::getTokenHeader($request));
+      $entity = $controller->$methodName($request->getQueryParams(), $args, RoutersCommonUtils::getTokenHeader($request));
 
     } else if ($httpMethod !== 'GET' && $useTokenHeader == true) {
       // $logger->info('Using token header');
-      $entity = $controller->$methodName($request->getParsedBody(), RoutersCommonUtils::getTokenHeader($request));
+      $entity = $controller->$methodName($request->getParsedBody(), $args, RoutersCommonUtils::getTokenHeader($request));
 
     } else if ($httpMethod !== 'GET') {
       // $logger->info('Not using token header');
-      $entity = $controller->$methodName($request->getParsedBody());
+      $entity = $controller->$methodName($request->getParsedBody(), $args);
     } else {
       // $logger->info(json_encode($queryParams))
-      $entity = $controller->$methodName($request->getQueryParams());
+      $entity = $controller->$methodName($request->getQueryParams(), $args);
     }
 
     return $entity;

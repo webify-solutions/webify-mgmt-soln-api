@@ -20,9 +20,8 @@ class ControllersCommonUtils
   {
     $errorDump = $database->error();
     if (isset($errorDump[0]) && $errorDump[0] !== '00000') {
-      foreach ($errorDump as $error) {
-        $logger->error($error);
-      }
+      $logger->error(json_encode($database->log()));
+      $logger->error(json_encode($database->error()));
 
       throw new DatabaseErrorException('Error occured, please contact your adminstrator');
     }
@@ -40,7 +39,7 @@ class ControllersCommonUtils
           $newResult[$key] = $value;
         }
       }
-      
+
       if ($newResult !== []) {
         $newResults[] = $newResult;
       }
