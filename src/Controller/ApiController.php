@@ -178,9 +178,12 @@ class ApiController
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
 
-    if ($user['customer_id'] !== null) {
+    if ($user['role'] === 'Customer') {
       $customer_id = $user['customer_id'];
+    } else if ($user['role'] === 'Technician') {
+      $technician_id = $user['id'];
     }
+
     $organization_id = $user['organization_id'];
     $queryString = "
       SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
@@ -197,6 +200,8 @@ class ApiController
 
     if (isset($customer_id)) {
       $queryString .= " AND i.customer_id = " . $customer_id;
+    } else if (isset($technician_id)) {
+      $queryString .= " AND i.technician_id = " . $technician_id;
     }
     $queryString .= " GROUP BY i.id";
 
