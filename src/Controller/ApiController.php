@@ -28,7 +28,7 @@ class ApiController
   {
     $where = ['user.active'=> true];
     if (isset($data['login_name']) && isset($data['password']) && isset($data['token'])) {
-      $where['login_name'] = $data['login_name'];
+      $where['user.login_name'] = $data['login_name'];
       // $where['password'] = $data['password'];
     } else if (isset($data['token'])) {
       $where['mobile_token'] = $data['token'];
@@ -39,18 +39,18 @@ class ApiController
     $user = $this->database->get(
       'user',
       [
-        '[>]customer' => ['login_name' => 'customer_number']
+        '[>]customer' => ['login_name' => 'login_name']
       ],
-      ['user.id', 'user.organization_id', 'login_name', 'user.name', 'password', 'mobile_token',
+      ['user.id', 'user.organization_id', 'user.login_name', 'user.name', 'password', 'mobile_token',
         'user.phone', 'user.email', 'role', 'customer.id(customer_id)'],
       $where
     );
 
-    // $this->logger->info(json_encode( $this->database->log() ));
+    $this->logger->info(json_encode( $this->database->log() ));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $user, $this->logger);
 
-    // $this->logger->info(json_encode($user));
-    // $this->logger->info(password_verify($data['password'], $user['password']));
+    $this->logger->info(json_encode($user));
+    $this->logger->info(password_verify($data['password'], $user['password']));
     if (
       $user == null || (
           isset($data['password'])
@@ -103,7 +103,7 @@ class ApiController
     // $this->logger->info($organizationId);
     $customers = $this->database->select(
       'customer',
-      ['id', 'customer_number(login_name)', 'customer_name' =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
+      ['id', 'login_name', 'customer_name' =>  Medoo::raw("CONCAT(customer_number, ': ', name)")],
       ['organization_id' => $user['organization_id']]
     );
     // $this->logger->info(json_encode($customers));
@@ -119,14 +119,14 @@ class ApiController
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
 
-    $customerNumber = null;
+    $customerLoginName = null;
     // $this->logger->info($user['role'] == 'Customer'? 'true' : 'false');
     if ($user['role'] === 'Customer') {
-      $customerNumber = $user['login_name'];
+      $customerLoginName = $user['login_name'];
     } else {
-      $customerNumber = $queryParams['customer_number'];
-      if ($customerNumber === null) {
-        throw new BadRequestException('customer_number query parameter is missing');
+      $customerLoginName = $queryParams['customer_login_name'];
+      if ($customerLoginName === null) {
+        throw new BadRequestException('customer_login_name query parameter is missing');
       }
     }
 
@@ -137,7 +137,7 @@ class ApiController
       INNER JOIN order_item oi ON (oi.product_id = p.id)
       INNER JOIN `order` o on (o.id = oi.order_id)
       INNER JOIN customer c on (c.id = o.customer_id)
-      WHERE c.customer_number = '" . $customerNumber . "' AND p.organization_id = " . $organizationId . "
+      WHERE c.login_name = '" . $customerLoginName . "' AND p.organization_id = " . $organizationId . "
       GROUP BY p.id, p.name;";
     // $this->logger->info($queryString);
     $productQuery = $this->database->query($queryString);
