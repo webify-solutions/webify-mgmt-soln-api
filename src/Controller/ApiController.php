@@ -119,13 +119,13 @@ class ApiController
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
 
-    $customerLoginName = null;
+    $customerId = null;
     // $this->logger->info($user['role'] == 'Customer'? 'true' : 'false');
     if ($user['role'] === 'Customer') {
-      $customerLoginName = $user['login_name'];
+      $customerId = $user['customer_id'];
     } else {
-      $customerLoginName = $queryParams['customer_login_name'];
-      if ($customerLoginName === null) {
+      $customerId = $queryParams['customer_id'];
+      if ($customerId === null) {
         throw new BadRequestException('customer_login_name query parameter is missing');
       }
     }
@@ -136,8 +136,7 @@ class ApiController
       FROM product p
       INNER JOIN order_item oi ON (oi.product_id = p.id)
       INNER JOIN `order` o on (o.id = oi.order_id)
-      INNER JOIN customer c on (c.id = o.customer_id)
-      WHERE c.login_name = '" . $customerLoginName . "' AND p.organization_id = " . $organizationId . "
+      WHERE o.customer_id = '" . $customerId . "' AND p.organization_id = " . $organizationId . "
       GROUP BY p.id, p.name;";
     // $this->logger->info($queryString);
     $productQuery = $this->database->query($queryString);
