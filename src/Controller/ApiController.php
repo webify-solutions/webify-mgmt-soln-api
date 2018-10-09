@@ -46,11 +46,11 @@ class ApiController
       $where
     );
 
-    $this->logger->info(json_encode( $this->database->log() ));
+    // $this->logger->info(json_encode( $this->database->log() ));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $user, $this->logger);
 
-    $this->logger->info(json_encode($user));
-    $this->logger->info(password_verify($data['password'], $user['password']));
+    // $this->logger->info(json_encode($user));
+    // $this->logger->info(password_verify($data['password'], $user['password']));
     if (
       $user == null || (
           isset($data['password'])
@@ -189,7 +189,7 @@ class ApiController
       SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
         CONCAT(customer_number, ' : ', c.`name`) AS customer_name, i.product_id,
         p.`name` AS product_name, o.order_date as ordered_date,  i.technician_id,
-        t.`name` as technician_name, i.`status`
+        t.`name` as technician_name, i.`status`, '". $user['role'] . "' as 'auth_user_role'
       FROM issues i
       INNER JOIN customer c ON (c.id = i.customer_id)
       INNER JOIN product p ON (p.id = i.product_id)
@@ -205,15 +205,20 @@ class ApiController
     }
     $queryString .= " GROUP BY i.id";
 
-    $this->logger->info($queryString);
+    // $this->logger->info($queryString);
     $issuesQuery = $this->database->query($queryString);
     $issues = $issuesQuery->fetchAll(PDO::FETCH_ASSOC);
     // $this->logger->info(json_encode($this->database->log()));
 
-    // $this->logger->info('Query results: ' . json_encode($issues));
-    // $this->logger->info(json_encode($products));
+    $this->logger->info('Query results: ' . json_encode($issues));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $issues, $this->logger);
 
+    // foreach ($issues as $issue) {
+    //   $this->looger->info($issue);
+    //   $issue['user_role'] = $user['role'];
+    //   $this->looger->info($issue['user_role']);
+    // }
+    // $this->logger->info(json_encode($issues));
     // $this->logger->info('Filtered Query results: ' . ControllersCommonUtils::skipOnNull($issues, $this->logger));
     return  ControllersCommonUtils::skipOnNull($issues, $this->logger);
   }
@@ -288,6 +293,7 @@ class ApiController
         'id' => $args['issue_id']
       ]
     );
+
     // $this->logger->info('Query results: ' . json_encode($issues));
     // $this->logger->info(json_encode($products));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);

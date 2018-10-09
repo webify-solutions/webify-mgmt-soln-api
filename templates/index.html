@@ -198,17 +198,17 @@
 </code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><p>Unauthorized access</p></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="products" class="panel-title">/products</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_products"><span class="parent"></span>/products</a> <span class="methods"><a href="#products_get"><span class="badge badge_get">get</span></a></span></h4></div><div id="panel_products" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#products_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Retrieve a list of products</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="products_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/products</h4></div><div class="modal-body"><div class="alert alert-info"><p>Retrieve a list of products</p></div><ul class="nav nav-tabs"><li class="active"><a href="#products_get_request" data-toggle="tab">Request</a></li><li><a href="#products_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="products_get_request"><h3>Headers</h3><ul><li><strong>X-Token</strong>: <em>required (string)</em><p>Authentication client token</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>abc1234</code></pre></div></li></ul><h3>Query Parameters</h3><ul><li><strong>customer_login_name</strong>: <em>(string)</em><p>Retrieve a list of products ordered by the customer id</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>C00001-1</code></pre></div></li></ul></div><div class="tab-pane" id="products_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
   {
     "id": 1,
-    "ordered_datetime": "2018-07-25 15:02:44",
+    "ordered_date": "2018-07-25",
     "product_name": "hyundai grand i10 255"
   },
   {
     "id": 3,
-    "ordered_datetime": "2018-09-07 13:29:27",
+    "ordered_date": "2018-09-07",
     "product_name": "hyundai grand i10 267"
   },
   {
     "id": 12,
-    "ordered_datetime": "2018-07-25 15:02:44",
+    "ordered_date": "2018-07-25",
     "product_name": "Solaris 832"
   }
 ]
@@ -257,7 +257,7 @@
 </code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/400" target="_blank">400</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>{
   "message": "Something bad has happened"
 }
-</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><p>Unauthorized access</p></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="issues" class="panel-title">/issues</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_issues"><span class="parent"></span>/issues</a> <span class="methods"><a href="#issues_get"><span class="badge badge_get">get</span></a> <a href="#issues_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_issues" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#issues_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Retrieve a list of issues reported by customers</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#issues_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create an issue reported by the customer</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="issues_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/issues</h4></div><div class="modal-body"><div class="alert alert-info"><p>Retrieve a list of issues reported by customers</p></div><ul class="nav nav-tabs"><li class="active"><a href="#issues_get_request" data-toggle="tab">Request</a></li><li><a href="#issues_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="issues_get_request"><h3>Headers</h3><ul><li><strong>X-Token</strong>: <em>required (string)</em><p>Authentication client token</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>abc1234</code></pre></div></li></ul></div><div class="tab-pane" id="issues_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
+</code></pre></div><h2>HTTP status code <a href="http://httpstatus.es/403" target="_blank">403</a></h2><p>Unauthorized access</p></div></div></div></div></div></div></div></div></div></div><div class="panel panel-default"><div class="panel-heading"><h3 id="issues" class="panel-title">/issues</h3></div><div class="panel-body"><div class="panel-group"><div class="panel panel-white resource-modal"><div class="panel-heading"><h4 class="panel-title"><a class="collapsed" data-toggle="collapse" href="#panel_issues"><span class="parent"></span>/issues</a> <span class="methods"><a href="#issues_get"><span class="badge badge_get">get</span></a> <a href="#issues_post"><span class="badge badge_post">post</span></a></span></h4></div><div id="panel_issues" class="panel-collapse collapse"><div class="panel-body"><div class="list-group"><div onclick="window.location.href = '#issues_get'" class="list-group-item"><span class="badge badge_get">get</span><div class="method_description"><p>Retrieve a list of issues reported by customers</p></div><div class="clearfix"></div></div><div onclick="window.location.href = '#issues_post'" class="list-group-item"><span class="badge badge_post">post</span><div class="method_description"><p>Create an issue reported by the customer</p></div><div class="clearfix"></div></div></div></div></div><div class="modal fade" tabindex="0" id="issues_get"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h4 class="modal-title" id="myModalLabel"><span class="badge badge_get">get</span> <span class="parent"></span>/issues</h4></div><div class="modal-body"><div class="alert alert-info"><p>Retrieve a list of issues reported by customers</p></div><ul class="nav nav-tabs"><li class="active"><a href="#issues_get_request" data-toggle="tab">Request</a></li><li><a href="#issues_get_response" data-toggle="tab">Response</a></li></ul><div class="tab-content"><div class="tab-pane active" id="issues_get_request"><h3>Headers</h3><ul><li><strong>X-Token</strong>: <em>required (string)</em><p>Authentication client token</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>abc1234</code></pre></div></li></ul></div><div class="tab-pane" id="issues_get_response"><h2>HTTP status code <a href="http://httpstatus.es/200" target="_blank">200</a></h2><h3>Headers</h3><ul><li><strong>X-User-Role</strong>: <em>required (string)</em><p>Role of the authentication user based on the X-Token</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>Technician</code></pre></div></li></ul><h3>Body</h3><p><strong>Media type</strong>: application/json</p><p><strong>Type</strong>: any</p><p><strong>Example</strong>:</p><div class="examples"><pre><code>[
   {
     "id": 1,
     "title": "",
@@ -265,7 +265,7 @@
     "customer_id": 32,
     "customer_name": "Abo Talal",
     "product_id": 1,
-    "ordered_datetime": "2018-07-25 15:02:44",
+    "ordered_date": "2018-07-25",
     "product_name": "hyundai grand i10 255",
     "status": "Draft"
   },
@@ -276,7 +276,7 @@
     "customer_id": 12,
     "customer_name": "Samar G.",
     "product_id": 3,
-    "ordered_datetime": "2018-09-07 13:29:27",
+    "ordered_date": "2018-09-07",
     "product_name": "hyundai grand i10 267",
     "technician_id": 3,
     "technician_name": "John Smith",
@@ -289,7 +289,7 @@
     "customer_id": 32,
     "customer_name": "Ali H.",
     "product_id": 12,
-    "ordered_datetime": "2018-07-25 15:02:44",
+    "ordered_date": "2018-07-25",
     "product_name": "Solaris 832",
     "technician_id": 21,
     "technician_name": "Smith Doe",
@@ -302,7 +302,7 @@
     "customer_id": 6,
     "customer_name": "Alia E.",
     "product_id": 1,
-    "ordered_datetime": "2018-07-25 15:02:44",
+    "ordered_date": "2018-07-25",
     "product_name": "hyundai grand i10 255",
     "technician_id": 32,
     "technician_name": "Abo Ali",

@@ -46,7 +46,7 @@ class RoutersCommonUtils
       // $logger->info(json_encode($queryParams))
       $entity = $controller->$methodName($request->getQueryParams(), $args);
     }
-
+    
     return $entity;
   }
 
