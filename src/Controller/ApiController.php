@@ -204,6 +204,7 @@ class ApiController
       $queryString .= " AND i.technician_id = " . $technician_id;
     }
     $queryString .= " GROUP BY i.id";
+    $queryString .= " ORDER BY i.created_at DESC";
 
     // $this->logger->info($queryString);
     $issuesQuery = $this->database->query($queryString);
