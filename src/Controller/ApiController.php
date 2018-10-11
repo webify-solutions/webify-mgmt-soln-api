@@ -109,7 +109,7 @@ class ApiController
     // $this->logger->info(json_encode($customers));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $customers, $this->logger);
 
-    return $customers;
+    return ControllersCommonUtils::skipOnNull($customers, $this->logger);;
   }
 
   public function getProducts($queryParams, array $args, $token)
@@ -186,9 +186,10 @@ class ApiController
     $organization_id = $user['organization_id'];
     $queryString = "
       SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
-        CONCAT(customer_number, ' : ', c.`name`) AS customer_name, i.product_id,
-        p.`name` AS product_name, o.order_date as ordered_date,  i.technician_id,
-        t.`name` as technician_name, i.`status`, '". $user['role'] . "' as 'auth_user_role'
+        CONCAT(customer_number, ' : ', c.`name`) AS customer_name, c.address,
+        c.longitude, c.latitude, i.product_id, p.`name` AS product_name,
+        o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`,
+        '". $user['role'] . "' as 'auth_user_role'
       FROM issues i
       INNER JOIN customer c ON (c.id = i.customer_id)
       INNER JOIN product p ON (p.id = i.product_id)
@@ -212,14 +213,7 @@ class ApiController
     $this->logger->info('Query results: ' . json_encode($issues));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $issues, $this->logger);
 
-    // foreach ($issues as $issue) {
-    //   $this->looger->info($issue);
-    //   $issue['user_role'] = $user['role'];
-    //   $this->looger->info($issue['user_role']);
-    // }
-    // $this->logger->info(json_encode($issues));
-    // $this->logger->info('Filtered Query results: ' . ControllersCommonUtils::skipOnNull($issues, $this->logger));
-    return  ControllersCommonUtils::skipOnNull($issues, $this->logger);
+    return ControllersCommonUtils::skipOnNull($issues, $this->logger);
   }
 
   public function createIssue($data, array $args, $token)
