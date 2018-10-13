@@ -28,26 +28,25 @@ class RoutersCommonUtils
     return $token[0];
   }
 
-  static function processRequest(Request $request, array $args, string $methodName, string $httpMethod, Medoo $database, Logger $logger, $useTokenHeader = false)
+  static function processRequest(Request $request, array $args, string $methodName, string $httpMethod, Medoo $database, Logger $logger)
   {
     $controller = new ApiController($database, $logger);
-    if ($httpMethod === 'GET' && $useTokenHeader == true) {
-      // $logger->info('GET Using token header');
-      $entity = $controller->$methodName($request->getQueryParams(), $args, RoutersCommonUtils::getTokenHeader($request));
+    $data = $httpMethod === 'GET' ? $request->getQueryParams() : $request->getParsedBody();
+    $user = null;
 
-    } else if ($httpMethod !== 'GET' && $useTokenHeader == true) {
-      // $logger->info('Using token header');
-      $entity = $controller->$methodName($request->getParsedBody(), $args, RoutersCommonUtils::getTokenHeader($request));
-
-    } else if ($httpMethod !== 'GET') {
-      // $logger->info('Not using token header');
-      $entity = $controller->$methodName($request->getParsedBody(), $args);
+    if ($methodName === 'login') {
+      $response = $controller->$methodName($data, $args);
+    } else if ($methodName === 'logout') {
+      $token = RoutersCommonUtils::getTokenHeader($request);
+      $response = $controller->$methodName($data, $args, $token);
     } else {
-      // $logger->info(json_encode($queryParams))
-      $entity = $controller->$methodName($request->getQueryParams(), $args);
+      $token = RoutersCommonUtils::getTokenHeader($request);
+      $user = $controller->login(['token' => $token]);
+      // $this->logger->info(json_encode($user));
+      $response = $controller->$methodName($data, $args, $user);
     }
-    
-    return $entity;
+
+    return ['response' => $response, 'user' => $user];
   }
 
   static function prepareErrorResponse(Response $response, string $message, int $httpStatusCode, $loggers)
@@ -55,8 +54,12 @@ class RoutersCommonUtils
     return $response->withJson(["message" => $message], $httpStatusCode);
   }
 
-  static function prepareSuccessResponse(Response $response, array $data, int $httpStatusCode, $logger)
+  static function prepareSuccessResponse(Response $response, $message, int $httpStatusCode, $logger)
   {
-    return $response->withJson($data, $httpStatusCode);
+    // $logger->info($message['user']);
+    if ($message['user'] !== null) {
+      $response = $response->withHeader('X-User-Role', $message['user']['role']);
+    }
+    return $response->withJson($message['response'], $httpStatusCode);
   }
 }
