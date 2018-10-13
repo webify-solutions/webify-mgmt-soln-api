@@ -30,7 +30,7 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
 {
   $this->logger->info("Requesting login");
   try {
-    $user = RoutersCommonUtils::processRequest($request, $args, 'login', 'POST', $this->database, $this->logger);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'login', 'POST', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -43,14 +43,14 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/login"), function 
   }
 
   // $this->logger->info(json_encode($user));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $user, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/logout"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Requesting logout");
   try {
-    $message = RoutersCommonUtils::processRequest($request, $args, 'logout', 'GET', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'logout', 'GET', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -70,7 +70,7 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/customers"), functi
 {
   $this->logger->info("Requesting customers");
   try {
-    $customers = RoutersCommonUtils::processRequest($request, $args, 'getCustomers', 'GET', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'getCustomers', 'GET', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -83,14 +83,14 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/customers"), functi
   }
 
   // $this->logger->info(json_encode($message));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $customers, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/products"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Requesting products");
   try {
-    $products = RoutersCommonUtils::processRequest($request, $args, 'getProducts', 'GET', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'getProducts', 'GET', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -103,14 +103,14 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/products"), functio
   }
 
   // $this->logger->info(json_encode($message));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $products, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/technicians"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info('Requesting technicians');
   try {
-    $products = RoutersCommonUtils::processRequest($request, $args, 'getTechnicians', 'GET', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'getTechnicians', 'GET', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -123,14 +123,14 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/technicians"), func
   }
 
   // $this->logger->info(json_encode($message));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $products, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}/issues"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Requesting issues");
   try {
-    $issues = RoutersCommonUtils::processRequest($request, $args, 'getIssues', 'GET', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'getIssues', 'GET', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -143,14 +143,14 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/issues"), function 
   }
 
   // $this->logger->info(json_encode($message));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $issues, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->post(str_replace("{base_path}", base_path, "{base_path}/issues"), function (Request $request, Response $response, array $args)
 {
   $this->logger->info("Posting issue");
   try {
-    $issue = RoutersCommonUtils::processRequest($request, $args, 'createIssue', 'POST', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'createIssue', 'POST', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -163,7 +163,7 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/issues"), function
   }
 
   // $this->logger->info(json_encode($user));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $issue, 201, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 201, $this->logger);
 });
 
 $app->patch(str_replace("{base_path}", base_path, "{base_path}/issues/{issue_id}"), function (Request $request, Response $response, array $args)
@@ -171,7 +171,7 @@ $app->patch(str_replace("{base_path}", base_path, "{base_path}/issues/{issue_id}
   $this->logger->info(str_replace("{issue_id}", $args['issue_id'], "Patching issue {issue_id}"));
 
   try {
-    $issue = RoutersCommonUtils::processRequest($request, $args, 'updateIssue', 'PATCH', $this->database, $this->logger, true);
+    $message = RoutersCommonUtils::processRequest($request, $args, 'updateIssue', 'PATCH', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
@@ -184,7 +184,7 @@ $app->patch(str_replace("{base_path}", base_path, "{base_path}/issues/{issue_id}
   }
 
   // $this->logger->info(json_encode($user));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $issue, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->get(str_replace("{base_path}", base_path, "{base_path}"), function (Request $request, Response $response, array $args)

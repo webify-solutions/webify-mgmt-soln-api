@@ -24,7 +24,7 @@ class ApiController
     $this->logger = $logger;
   }
 
-  public function login($data, $args = null)
+  public function login($data, $args=null)
   {
     $where = ['user.active'=> true];
     if (isset($data['login_name']) && isset($data['password']) && isset($data['token'])) {
@@ -92,14 +92,11 @@ class ApiController
     return ['message' => 'Logout successfully'];
   }
 
-  public function getCustomers($queryParams, array $args, $token)
+  public function getCustomers($queryParams, $args, $user)
   {
-    $user = $this->login(['token' => $token]);
-    // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
-
     // $this->logger->info($organizationId);
     $customers = $this->database->select(
       'customer',
@@ -112,13 +109,11 @@ class ApiController
     return ControllersCommonUtils::skipOnNull($customers, $this->logger);;
   }
 
-  public function getProducts($queryParams, array $args, $token)
+  public function getProducts($queryParams, $args, $user)
   {
-    $user = $this->login(['token' => $token]);
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
-
     $customerId = null;
     // $this->logger->info($user['role'] == 'Customer'? 'true' : 'false');
     if ($user['role'] === 'Customer') {
@@ -149,14 +144,11 @@ class ApiController
     return $products;
   }
 
-  public function getTechnicians($queryParams, array $args, $token)
+  public function getTechnicians($queryParams, $args, $user)
   {
-    $user = $this->login(['token' => $token]);
-    // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
-
     // $this->logger->info($organizationId);
     $technicians = $this->database->select(
       'user',
@@ -170,9 +162,8 @@ class ApiController
     return $technicians;
   }
 
-  public function getIssues($queryParams, array $args, $token) {
-    $user = $this->login(['token' => $token]);
-    // $this->logger->info(json_encode($user));
+  public function getIssues($queryParams, $args, $user)
+  {
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
@@ -211,20 +202,17 @@ class ApiController
     $issues = $issuesQuery->fetchAll(PDO::FETCH_ASSOC);
     // $this->logger->info(json_encode($this->database->log()));
 
-    $this->logger->info('Query results: ' . json_encode($issues));
+    // $this->logger->info('Query results: ' . json_encode($issues));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $issues, $this->logger);
 
     return ControllersCommonUtils::skipOnNull($issues, $this->logger);
   }
 
-  public function createIssue($data, array $args, $token)
+  public function createIssue($data, $args, $user)
   {
-    $user = $this->login(['token' => $token]);
-    // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
-
     $organization_id = $user['organization_id'];
     // Data mapping
     $dataMapping = [];
@@ -255,10 +243,8 @@ class ApiController
     return $data;
   }
 
-  public function updateIssue($data, array $args, $token)
+  public function updateIssue($data, array $args, $user)
   {
-    $user = $this->login(['token' => $token]);
-    // $this->logger->info(json_encode($user));
     if (in_array($user['role'], ['Admin', 'Technician', 'Customer']) === false) {
       throw new UnauthorizedException("You're not authorized to access this resource");
     }
