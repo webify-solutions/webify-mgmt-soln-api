@@ -58,8 +58,17 @@ class RoutersCommonUtils
   {
     // $logger->info($message['user']);
     if ($message['user'] !== null) {
-      $response = $response->withHeader('X-User-Role', $message['user']['role']);
+      $response = $response->withHeader('user-role', $message['user']['role']);
     }
     return $response->withJson($message['response'], $httpStatusCode);
+  }
+
+  static function prepareSuccessResponseWithMetadata(Response $response, $message, int $httpStatusCode, $logger)
+  {
+    $newMessage = [
+      'user_role' => $message['user']['role'],
+      'data' => $message['response']
+    ];
+    return $response->withJson($newMessage, $httpStatusCode);
   }
 }

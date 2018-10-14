@@ -143,7 +143,7 @@ $app->get(str_replace("{base_path}", base_path, "{base_path}/issues"), function 
   }
 
   // $this->logger->info(json_encode($message));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponseWithMetadata($response, $message, 201, $this->logger);
 });
 
 $app->post(str_replace("{base_path}", base_path, "{base_path}/issues"), function (Request $request, Response $response, array $args)
@@ -163,7 +163,7 @@ $app->post(str_replace("{base_path}", base_path, "{base_path}/issues"), function
   }
 
   // $this->logger->info(json_encode($user));
-  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 201, $this->logger);
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
 });
 
 $app->patch(str_replace("{base_path}", base_path, "{base_path}/issues/{issue_id}"), function (Request $request, Response $response, array $args)
