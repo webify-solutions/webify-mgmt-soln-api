@@ -72,7 +72,8 @@ if ($dh = opendir($dir))
 }
 
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: X-Token, X-User-Role');
+header('Access-Control-Allow-Headers: X-Token');
+header('Access-Control-Exponse-Headers: X-User-Role');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
 
 // Run app
