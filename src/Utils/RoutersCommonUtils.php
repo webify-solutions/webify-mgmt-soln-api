@@ -58,7 +58,7 @@ class RoutersCommonUtils
   {
     // $logger->info($message['user']);
     if ($message['user'] !== null) {
-      $response = $response->withHeader('x-user-role', $message['user']['role']);
+      $response = $response->withHeader('user-role', $message['user']['role']);
     }
     return $response->withJson($message['response'], $httpStatusCode);
   }
