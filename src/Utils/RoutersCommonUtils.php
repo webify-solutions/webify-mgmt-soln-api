@@ -62,4 +62,13 @@ class RoutersCommonUtils
     }
     return $response->withJson($message['response'], $httpStatusCode);
   }
+
+  static function prepareSuccessResponseWithMetadata(Response $response, $message, int $httpStatusCode, $logger)
+  {
+    $newMessage = [
+      'userRole' => $message['user']['role'],
+      'data' => $message['response']
+    ];
+    return $response->withJson($newMessage, $httpStatusCode);
+  }
 }
