@@ -66,7 +66,7 @@ class RoutersCommonUtils
   static function prepareSuccessResponseWithMetadata(Response $response, $message, int $httpStatusCode, $logger)
   {
     $newMessage = [
-      'userRole' => $message['user']['role'],
+      'user_role' => $message['user']['role'],
       'data' => $message['response']
     ];
     return $response->withJson($newMessage, $httpStatusCode);
