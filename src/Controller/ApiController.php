@@ -278,4 +278,21 @@ class ApiController
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
     return $data;
   }
+
+  public function updateUserDeviceToken($data, array $args, $user)
+  {
+    if (isset($data['device_token'])) {
+      // $this->logger->info('Updating ' . $data['id'] . ' user mobile token');
+      $results = $this->database->update(
+        'user',
+        ['device_token' => $data['device_token']],
+        ['id' => $user['id']]
+      );
+      ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
+    } else {
+      throw new BadRequestException("device_token field is missing in the JSON request");
+    }
+
+    return $data;
+  }
 }
