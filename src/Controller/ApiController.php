@@ -179,8 +179,7 @@ class ApiController
       SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
         CONCAT(customer_number, ' : ', c.`name`) AS customer_name, c.address,
         c.longitude, c.latitude, i.product_id, p.`name` AS product_name,
-        o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`,
-        '". $user['role'] . "' as 'auth_user_role'
+        o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`
       FROM issues i
       INNER JOIN customer c ON (c.id = i.customer_id)
       INNER JOIN product p ON (p.id = i.product_id)
