@@ -9,6 +9,8 @@ use APP\Exception\UnauthorizedException;
 
 use App\Utils\ControllersCommonUtils;
 
+use App\Notification\FirebaseNotification;
+
 use PDO;
 use \Medoo\Medoo;
 
@@ -42,7 +44,7 @@ class ApiController
         '[>]customer' => ['login_name' => 'login_name']
       ],
       ['user.id', 'user.organization_id', 'user.login_name', 'user.name', 'password', 'mobile_token',
-        'user.phone', 'user.email', 'role', 'customer.id(customer_id)'],
+        'device_token', 'user.phone', 'user.email', 'role', 'customer.id(customer_id)'],
       $where
     );
 
@@ -238,7 +240,26 @@ class ApiController
     // $this->logger->info('Query results: ' . json_encode($issues));
     // $this->logger->info(json_encode($products));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
+
     $data['id'] = $this->database->id();
+
+    if ($data['status'] === 'Draft') {
+      $this->logger->info('Notify all admins of new issue');
+      // $this->logger->info($organizationId);
+      $technicians = $this->database->select(
+        'user',
+        ['id', 'name(admin_name)'],
+        ['organization_id' => $user['organization_id'], 'role' => 'Admin']
+      );
+      $results = $firebaseNotification->sendFirebaseNotification(
+          'New Issue Created',
+          'A new issue has been created in your organization ',
+          [
+              'id' => $data['id']
+          ]
+      );
+    }
+
     return $data;
   }
 
@@ -272,6 +293,45 @@ class ApiController
         'id' => $args['issue_id']
       ]
     );
+
+    $organization_id = $user['organization_id'];
+    $queryString = "
+      SELECT i.id, i.`subject` AS title, i.description, i.customer_id, c.device_token
+      i.technician_id, t.device_token, i.`status`
+      FROM issues i
+      INNER JOIN uset c ON (c.id = i.customer_id)
+      LEFT JOIN user t ON (t.id = i.technician_id)
+      WHERE i.organization_id = " . $organization_id . " AND id = " . $args['issue_id'];
+    $queryString .= " GROUP BY i.id";
+    $queryString .= " ORDER BY i.created_at DESC LIMIT 1";
+
+    // $this->logger->info($queryString);
+    $issuesQuery = $this->database->query($queryString);
+    $issue = $issuesQuery->fetchAll(PDO::FETCH_ASSOC)[0];
+
+    if ($data['status'] === 'Assigned')
+    {
+      $firebaseNotification = new FirebaseNotification($issue['t.device_token']);
+      $this->logger->info('Notify technician of new assignment');
+      $results = $firebaseNotification->sendFirebaseNotification(
+          'New Issue Assigned',
+          "A new issue '" . $issue['title'] . "'" . "has been assigned to you",
+          [
+              'id' => $args['issue_id']
+          ]
+      );
+    } else if ($data['status'] === 'PendingCustomerApproval')
+    {
+      $firebaseNotification = new FirebaseNotification($issue['c.device_token']);
+      $this->logger->info('Notify customer of new assignment');
+      $results = $firebaseNotification->sendFirebaseNotification(
+          'Issue Resolved',
+          "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
+          [
+              'id' => $args['issue_id']
+          ]
+      );
+    }
 
     // $this->logger->info('Query results: ' . json_encode($issues));
     // $this->logger->info(json_encode($products));
