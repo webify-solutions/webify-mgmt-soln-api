@@ -304,12 +304,14 @@ class ApiController
         'id' => $args['issue_id']
       ]
     );
+    ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
 
     $organization_id = $user['organization_id'];
     $queryString = "
     SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
       cu.device_token as customer_device_token, i.technician_id,
-      t.device_token as technician_device_token, i.`status`
+      t.device_token as technician_device_token, t.`name` as technician_name,
+      i.`status`
     FROM issues i
     INNER JOIN customer c on (c.id = i.customer_id)
     LEFT JOIN user cu ON (cu.login_name = c.login_name)
@@ -321,8 +323,10 @@ class ApiController
     // $this->logger->info($queryString);
     $issuesQuery = $this->database->query($queryString);
     $issue = $issuesQuery->fetchAll(PDO::FETCH_ASSOC)[0];
+    // $this->logger->info(json_encode($this->database->log()));
+    // $this->logger->error(json_encode($this->database->error()));
+    // $this->logger->info(json_encode($issue));
 
-    // $this->logger->info($issue);
     if ($data['status'] === 'Assigned')
     {
       // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
@@ -334,6 +338,24 @@ class ApiController
               'id' => $args['issue_id']
           ]
       );
+      // $this->logger->info($results);
+      unset($results);
+      unset($firebaseNotification);
+
+      // $this->logger->info('Notify customer of new assignment ' . $issue['customer_device_token']);
+      $firebaseNotification = new FirebaseNotification($issue['customer_device_token'], $this->logger);
+      $results = $firebaseNotification->sendFirebaseNotification(
+          'New Issue Assigned',
+          'A new issue has been assigned to the Technician ' . $issue['technician_name'],
+          [
+            'title' => 'New Issue Assigned',
+            'body' => 'A new issue has been assigned to the Technician ' . $issue['technician_name'],
+            'id' => $data['id']
+          ]
+      );
+      // $this->logger->info($results);
+      unset($results);
+      unset($firebaseNotification);
     } else if ($data['status'] === 'PendingCustomerApproval')
     {
       // $this->logger->info('Notify customer of issue completed ' . $issue['customer_device_token']);
@@ -347,13 +369,11 @@ class ApiController
             'id' => $args['issue_id']
           ]
       );
-
       // $this->logger->info($results);
+      unset($results);
+      unset($firebaseNotificaiton);
     }
 
-    // $this->logger->info('Query results: ' . json_encode($issues));
-    // $this->logger->info(json_encode($products));
-    ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
     return $data;
   }
 

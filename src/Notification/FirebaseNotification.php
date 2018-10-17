@@ -62,7 +62,7 @@ class FirebaseNotification
     curl_setopt( $ch,CURLOPT_POSTFIELDS, json_encode( $fields ) );
     // $this->logger->info($ch);
     $results = curl_exec($ch );
-    $this->logger->info($results);
+    // $this->logger->info($results);
     curl_close( $ch );
 
     return $results;
