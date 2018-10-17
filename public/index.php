@@ -57,6 +57,20 @@ if ($dh = opendir($dir))
   closedir($dh);
 }
 
+// Register Exceptions
+// require __DIR__ . '/../src/Exception/*Exception.php';
+$dir = __DIR__ . '/../src/Notification/';
+if ($dh = opendir($dir))
+{
+  while (($file = readdir($dh)) !== false){
+    if (strpos($file, '.php') !== false) {
+      // error_log($file . ' is required');
+      require $dir . $file;
+    }
+  }
+  closedir($dh);
+}
+
 // Register Utils
 // require __DIR__ . '/../src/Utils/*Utils.php';
 $dir = __DIR__ . '/../src/Utils/';

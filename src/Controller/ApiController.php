@@ -8,7 +8,6 @@ use APP\Exception\DatabaseErrorException;
 use APP\Exception\UnauthorizedException;
 
 use App\Utils\ControllersCommonUtils;
-
 use App\Notification\FirebaseNotification;
 
 use PDO;
@@ -246,18 +245,30 @@ class ApiController
     if ($data['status'] === 'Draft') {
       $this->logger->info('Notify all admins of new issue');
       // $this->logger->info($organizationId);
-      $technicians = $this->database->select(
+      $admins = $this->database->select(
         'user',
-        ['id', 'name(admin_name)'],
+        ['id', 'name(admin_name)', 'device_token'],
         ['organization_id' => $user['organization_id'], 'role' => 'Admin']
       );
-      $results = $firebaseNotification->sendFirebaseNotification(
-          'New Issue Created',
-          'A new issue has been created in your organization ',
-          [
-              'id' => $data['id']
-          ]
-      );
+      // $this->logger->info(json_encode($admins));
+      foreach ($admins as $admin) {
+        if ($admin['device_token'] !== null) {
+          $firebaseNotification = new FirebaseNotification($admin['device_token'], $this->logger);
+          $this->logger->info($firebaseNotification->getDeviceToken());
+          $results = $firebaseNotification->sendFirebaseNotification(
+              'New Issue Created',
+              'A new issue has been created in your organization ',
+              [
+                'title' => 'New Issue Created',
+                'body' => 'A new issue has been created in your organization ',
+                'id' => $data['id']
+              ]
+          );
+          unset($results);
+          unset($firebaseNotificaiton);
+        }
+      }
+      unset($admins);
     }
 
     return $data;
@@ -296,12 +307,14 @@ class ApiController
 
     $organization_id = $user['organization_id'];
     $queryString = "
-      SELECT i.id, i.`subject` AS title, i.description, i.customer_id, c.device_token
-      i.technician_id, t.device_token, i.`status`
-      FROM issues i
-      INNER JOIN uset c ON (c.id = i.customer_id)
-      LEFT JOIN user t ON (t.id = i.technician_id)
-      WHERE i.organization_id = " . $organization_id . " AND id = " . $args['issue_id'];
+    SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
+      cu.device_token as customer_device_token, i.technician_id,
+      t.device_token as technician_device_token, i.`status`
+    FROM issues i
+    INNER JOIN customer c on (c.id = i.customer_id)
+    LEFT JOIN user cu ON (cu.login_name = c.login_name)
+    LEFT JOIN user t ON (t.id = i.technician_id)
+      WHERE i.id = " . $args['issue_id'];
     $queryString .= " GROUP BY i.id";
     $queryString .= " ORDER BY i.created_at DESC LIMIT 1";
 
@@ -309,28 +322,33 @@ class ApiController
     $issuesQuery = $this->database->query($queryString);
     $issue = $issuesQuery->fetchAll(PDO::FETCH_ASSOC)[0];
 
+    // $this->logger->info($issue);
     if ($data['status'] === 'Assigned')
     {
-      $firebaseNotification = new FirebaseNotification($issue['t.device_token']);
-      $this->logger->info('Notify technician of new assignment');
+      // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
+      $firebaseNotification = new FirebaseNotification($issue['technician_device_token'], $this->logger);
       $results = $firebaseNotification->sendFirebaseNotification(
           'New Issue Assigned',
-          "A new issue '" . $issue['title'] . "'" . "has been assigned to you",
+          "A new issue has been assigned to you",
           [
               'id' => $args['issue_id']
           ]
       );
     } else if ($data['status'] === 'PendingCustomerApproval')
     {
-      $firebaseNotification = new FirebaseNotification($issue['c.device_token']);
-      $this->logger->info('Notify customer of new assignment');
+      // $this->logger->info('Notify customer of issue completed ' . $issue['customer_device_token']);
+      $firebaseNotification = new FirebaseNotification($issue['customer_device_token'], $this->logger);
       $results = $firebaseNotification->sendFirebaseNotification(
-          'Issue Resolved',
+          'تم حل المشكلة',
           "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
           [
-              'id' => $args['issue_id']
+            'title' => 'تم حل المشكلة',
+            'body' => "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
+            'id' => $args['issue_id']
           ]
       );
+
+      // $this->logger->info($results);
     }
 
     // $this->logger->info('Query results: ' . json_encode($issues));

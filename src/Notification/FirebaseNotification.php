@@ -1,24 +1,33 @@
 <?php
 
-namespace App\FirebaseNotification;
+namespace App\Notification;
 
 class FirebaseNotification
 {
   protected $deviceToken;
+  protected $logger;
   protected $apiAccessKey;
   protected $apiURL;
 
-  public public function __construct($deviceToken)
+  public function __construct($deviceToken, $logger)
   {
+    // $logger->info('Initialize new Firebase Notification');
     $this->deviceToken = $deviceToken;
-    $this->apiAccessKey = 'AAAAVWj2ErU:APA91bHAKAqrl67wpDTbDC1aGa4BIbBx3eCEfO4QcEsNNbbR1ReJNZv7g-4-X1jHrXCOolyVebmpdTZXR7AqRi9_NBHSLKleaJihYjuueI4s_OcEpngwzLirNW5tjlNnXlLSvlRd-d';
+    $this->logger = $logger;
+    $this->apiAccessKey = 'AIzaSyD2oRpLTBAQHHLIi9KbD4gqFMrmGtYjBz0';
     $this->apiURL = 'https://fcm.googleapis.com/fcm/send';
+    // $logger->info('Initilized new Firebase Notification');
+  }
+
+  public function getDeviceToken()
+  {
+    return $this->deviceToken;
   }
 
   public function sendFirebaseNotification($title, $body, $data)
   {
     #API access key from Google API's Console
-    define( 'API_ACCESS_KEY', $this->deviceToken );
+    define( 'API_ACCESS_KEY', $this->apiAccessKey );
 
     #prep the bundle
     $msg = array
@@ -26,20 +35,23 @@ class FirebaseNotification
         'body' => $body,
         'title'	=> $title
     );
+    // $this->logger->info(json_encode($msg));
 
-   $fields = array
-   (
+    $fields = array
+    (
        'priority' => 'high',
-       'to' => $deviceToken,
+       'to' => $this->deviceToken,
        'notification' => $msg,
        'data' => $data
-   );
+    );
+    // $this->logger->info(json_encode($fields));
 
     $headers = array
     (
         'Authorization: key=' . API_ACCESS_KEY,
         'Content-Type: application/json'
     );
+    // $this->logger->info(json_encode($headers));
 
     $ch = curl_init();
     curl_setopt( $ch,CURLOPT_URL, $this->apiURL );
@@ -48,7 +60,9 @@ class FirebaseNotification
     curl_setopt( $ch,CURLOPT_RETURNTRANSFER, true );
     curl_setopt( $ch,CURLOPT_SSL_VERIFYPEER, false );
     curl_setopt( $ch,CURLOPT_POSTFIELDS, json_encode( $fields ) );
+    // $this->logger->info($ch);
     $results = curl_exec($ch );
+    $this->logger->info($results);
     curl_close( $ch );
 
     return $results;
