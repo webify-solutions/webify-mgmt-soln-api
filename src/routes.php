@@ -189,10 +189,31 @@ $app->patch(str_replace("{base_path}", base_path, "{base_path}/issues/{issue_id}
 
 $app->put(str_replace("{base_path}", base_path, "{base_path}/user/device/token"), function (Request $request, Response $response, array $args)
 {
-  $this->logger->info("Updateing user device token");
+  $this->logger->info("Updating user device token");
 
   try {
     $message = RoutersCommonUtils::processRequest($request, $args, 'updateUserDeviceToken', $this->database, $this->logger);
+
+  } catch (BadCredentialsException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);
+  } catch (BadRequestException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 400, $this->logger);
+  } catch (UnauthorizedException $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 403, $this->logger);
+  } catch (Exception $e) {
+    return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 500, $this->logger);
+  }
+
+  // $this->logger->info(json_encode($user));
+  return RoutersCommonUtils::prepareSuccessResponse($response, $message, 200, $this->logger);
+});
+
+$app->post(str_replace("{base_path}", base_path, "{base_path}/notifications"), function (Request $request, Response $response, array $args)
+{
+  $this->logger->info("posting a new notification");
+
+  try {
+    $message = RoutersCommonUtils::processRequest($request, $args, 'sendNotification', $this->database, $this->logger);
 
   } catch (BadCredentialsException $e) {
     return RoutersCommonUtils::prepareErrorResponse($response, $e->getMessage(), 401, $this->logger);

@@ -35,7 +35,7 @@ class FirebaseNotification
         'body' => $body,
         'title'	=> $title
     );
-    // $this->logger->info(json_encode($msg));
+    $this->logger->info(json_encode($msg));
 
     $fields = array
     (
@@ -44,14 +44,14 @@ class FirebaseNotification
        'notification' => $msg,
        'data' => $data
     );
-    // $this->logger->info(json_encode($fields));
+    $this->logger->info(json_encode($fields));
 
     $headers = array
     (
         'Authorization: key=' . API_ACCESS_KEY,
         'Content-Type: application/json'
     );
-    // $this->logger->info(json_encode($headers));
+    $this->logger->info(json_encode($headers));
 
     $ch = curl_init();
     curl_setopt( $ch,CURLOPT_URL, $this->apiURL );
@@ -60,9 +60,9 @@ class FirebaseNotification
     curl_setopt( $ch,CURLOPT_RETURNTRANSFER, true );
     curl_setopt( $ch,CURLOPT_SSL_VERIFYPEER, false );
     curl_setopt( $ch,CURLOPT_POSTFIELDS, json_encode( $fields ) );
-    // $this->logger->info($ch);
+    $this->logger->info($ch);
     $results = curl_exec($ch );
-    // $this->logger->info($results);
+    $this->logger->info($results);
     curl_close( $ch );
 
     return $results;

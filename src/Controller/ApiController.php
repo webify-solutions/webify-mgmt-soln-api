@@ -311,86 +311,61 @@ class ApiController
 
     if ($data['status'] === 'Assigned')
     {
-      // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
-      $firebaseNotification = new FirebaseNotification($issue['technician_device_token'], $this->logger);
-      $results = $firebaseNotification->sendFirebaseNotification(
-          'New Issue Assigned',
-          "A new issue has been assigned to you",
-          [
-              'id' => $args['issue_id']
-          ]
-      );
+      // $this->logger->info('Notify technician of new assignment ' . $issue['technician_device_token']);
+      $data = [
+        'title' => 'New Issue Assigned',
+        'body' => 'A new issue has been assigned to you',
+        'id' => $issue['id'],
+        'device_token' => $issue['technician_device_token']
+      ];
+      // $this->logger->info(json_encode($data));
+      $results = $this->sendNotification($data);
       // $this->logger->info($results);
       unset($results);
-      unset($firebaseNotification);
 
-      // $this->logger->info('Notify customer of new assignment ' . $issue['customer_device_token']);
-      $firebaseNotification = new FirebaseNotification($issue['customer_device_token'], $this->logger);
-      $results = $firebaseNotification->sendFirebaseNotification(
-          'New Issue Assigned',
-          'A new issue has been assigned to the Technician ' . $issue['technician_name'],
-          [
-            'title' => 'New Issue Assigned',
-            'body' => 'A new issue has been assigned to the Technician ' . $issue['technician_name'],
-            'id' => $data['id']
-          ]
-      );
+      // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
+      $data = [
+        'title' => 'New Issue Assigned',
+        'body' => 'A new issue has been assigned to the Technician ' . $issue['technician_name'],
+        'id' => $issue['id'],
+        'device_token' => $issue['customer_device_token']
+      ];
+      // $this->logger->info(json_encode($data));
+      $results = $this->sendNotification($data);
       // $this->logger->info($results);
       unset($results);
-      unset($firebaseNotification);
+
     } else if ($data['status'] === 'PendingCustomerApproval')
     {
-      // $this->logger->info('Notify customer of issue completed ' . $issue['customer_device_token']);
-      $firebaseNotification = new FirebaseNotification($issue['customer_device_token'], $this->logger);
-      $results = $firebaseNotification->sendFirebaseNotification(
-          'تم حل المشكلة',
-          "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
-          [
-            'title' => 'تم حل المشكلة',
-            'body' => "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
-            'id' => $args['issue_id']
-          ]
-      );
+      // $this->logger->info('Notify technician of new assignment ' . $issue['technician_device_token']);
+      $data = [
+        'title' => 'تم حل المشكلة',
+        'body' => "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
+        'id' => $issue['id'],
+        'device_token' => $issue['customer_device_token']
+      ];
+      // $this->logger->info(json_encode($data));
+      $results = $this->sendNotification($data);
       // $this->logger->info($results);
       unset($results);
-      unset($firebaseNotificaiton);
-    } else if ($data['status'] === 'Cancelled')
+
+    } else if ($data['status'] === 'Closed' || $data['status'] === 'Cancelled')
     {
-      if (isset($issue['technician_device_token']) && $issue['technician_device_token'] !== null) {
-        // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
-        $firebaseNotification = new FirebaseNotification($issue['technician_device_token'], $this->logger);
-        $results = $firebaseNotification->sendFirebaseNotification(
-            'Issue Closed',
-            "Your assinged issue '" . $issue['title'] . "' has been approved",
-            [
-                'id' => $args['issue_id']
-            ]
-        );
+      if (isset($issue['technician_device_token']) && $issue['technician_device_token'] !== null)
+      {
+        $this->logger->info('Notify technician of close issue ' . $issue['technician_device_token']);
+        $data = [
+          'title' => 'Issue Closed',
+          'body' => "Your assinged issue '" . $issue['title'] . "' has been approved",
+          'id' => $args['issue_id'],
+          'device_token' => $issue['technician_device_token']
+        ];
+        $this->logger->info(json_encode($data));
+        $results = $this->sendNotification($data);
+
         // $this->logger->info($results);
         unset($results);
-        unset($firebaseNotification);
       }
-      // $this->logger->info('Notify admins an issue has been cancelled);
-      $message = [
-        'title' => 'Issue Cancelled',
-        'body' => 'An issue has been cancelled in your organization ',
-        'id' => $data['id']
-      ];
-      ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
-    } else if ($data['status'] === 'Closed')
-    {
-      // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
-      $firebaseNotification = new FirebaseNotification($issue['technician_device_token'], $this->logger);
-      $results = $firebaseNotification->sendFirebaseNotification(
-          'Issue Closed',
-          "Your assinged issue '" . $issue['title'] . "' has been approved",
-          [
-              'id' => $args['issue_id']
-          ]
-      );
-      // $this->logger->info($results);
-      unset($results);
-      unset($firebaseNotification);
 
       // $this->logger->info('Notify admins an issue has been cancelled);
       $message = [
@@ -404,7 +379,7 @@ class ApiController
     return $data;
   }
 
-  public function updateUserDeviceToken($data, array $args, $user)
+  public function updateUserDeviceToken($data, $args, $user)
   {
     if (isset($data['device_token'])) {
       // $this->logger->info('Updating ' . $data['id'] . ' user mobile token');
@@ -419,5 +394,31 @@ class ApiController
     }
 
     return $data;
+  }
+
+  public function sendNotification($data, $args = null, $user = null) {
+    if (isset($data['device_token']) === false ) {
+      throw new BadRequestException("device_token field is missing in the JSON request");
+    }
+    if (isset($data['title']) === false ) {
+      throw new BadRequestException("title field is missing in the JSON request");
+    }
+    if (isset($data['body']) === false ) {
+      throw new BadRequestException("body field is missing in the JSON request");
+    }
+
+    $deviceToken = $data['device_token'];
+    $firebaseNotification = new FirebaseNotification($deviceToken, $this->logger);
+    unset($data['device_token']);
+    $this->logger->info('Sending notification to ' . $deviceToken);
+    $results = $firebaseNotification->sendFirebaseNotification(
+        $data['title'],
+        $data['body'],
+        $data
+    );
+    // $this->logger->info($results);
+    unset($firebaseNotification);
+
+    return json_decode($results);
   }
 }
