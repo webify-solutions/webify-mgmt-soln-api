@@ -356,6 +356,20 @@ class ApiController
       unset($firebaseNotificaiton);
     } else if ($data['status'] === 'Cancelled')
     {
+      if (isset($issue['technician_device_token']) && $issue['technician_device_token'] !== null) {
+        // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
+        $firebaseNotification = new FirebaseNotification($issue['technician_device_token'], $this->logger);
+        $results = $firebaseNotification->sendFirebaseNotification(
+            'Issue Closed',
+            "Your assinged issue '" . $issue['title'] . "' has been approved",
+            [
+                'id' => $args['issue_id']
+            ]
+        );
+        // $this->logger->info($results);
+        unset($results);
+        unset($firebaseNotification);
+      }
       // $this->logger->info('Notify admins an issue has been cancelled);
       $message = [
         'title' => 'Issue Cancelled',
@@ -365,6 +379,19 @@ class ApiController
       ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
     } else if ($data['status'] === 'Closed')
     {
+      // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
+      $firebaseNotification = new FirebaseNotification($issue['technician_device_token'], $this->logger);
+      $results = $firebaseNotification->sendFirebaseNotification(
+          'Issue Closed',
+          "Your assinged issue '" . $issue['title'] . "' has been approved",
+          [
+              'id' => $args['issue_id']
+          ]
+      );
+      // $this->logger->info($results);
+      unset($results);
+      unset($firebaseNotification);
+
       // $this->logger->info('Notify admins an issue has been cancelled);
       $message = [
         'title' => 'Issue Closed',
