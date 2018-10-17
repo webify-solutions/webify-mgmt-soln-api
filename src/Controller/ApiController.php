@@ -245,30 +245,12 @@ class ApiController
     if ($data['status'] === 'Draft') {
       $this->logger->info('Notify all admins of new issue');
       // $this->logger->info($organizationId);
-      $admins = $this->database->select(
-        'user',
-        ['id', 'name(admin_name)', 'device_token'],
-        ['organization_id' => $user['organization_id'], 'role' => 'Admin']
-      );
-      // $this->logger->info(json_encode($admins));
-      foreach ($admins as $admin) {
-        if ($admin['device_token'] !== null) {
-          $firebaseNotification = new FirebaseNotification($admin['device_token'], $this->logger);
-          $this->logger->info($firebaseNotification->getDeviceToken());
-          $results = $firebaseNotification->sendFirebaseNotification(
-              'New Issue Created',
-              'A new issue has been created in your organization ',
-              [
-                'title' => 'New Issue Created',
-                'body' => 'A new issue has been created in your organization ',
-                'id' => $data['id']
-              ]
-          );
-          unset($results);
-          unset($firebaseNotificaiton);
-        }
-      }
-      unset($admins);
+      $message = [
+        'title' => 'New Issue Created',
+        'body' => 'A new issue has been created in your organization ',
+        'id' => $data['id']
+      ];
+      ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
     }
 
     return $data;
@@ -372,6 +354,24 @@ class ApiController
       // $this->logger->info($results);
       unset($results);
       unset($firebaseNotificaiton);
+    } else if ($data['status'] === 'Cancelled')
+    {
+      // $this->logger->info('Notify admins an issue has been cancelled);
+      $message = [
+        'title' => 'Issue Cancelled',
+        'body' => 'An issue has been cancelled in your organization ',
+        'id' => $data['id']
+      ];
+      ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
+    } else if ($data['status'] === 'Closed')
+    {
+      // $this->logger->info('Notify admins an issue has been cancelled);
+      $message = [
+        'title' => 'Issue Closed',
+        'body' => 'An issue has been accepted by the customer in your organization ',
+        'id' => $data['id']
+      ];
+      ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
     }
 
     return $data;
