@@ -314,7 +314,7 @@ class ApiController
       // $this->logger->info('Notify technician of new assignment ' . $issue['technician_device_token']);
       $data = [
         'title' => 'New Issue Assigned',
-        'body' => 'A new issue has been assigned to you',
+        'body' => 'A new issue ' . $issue['title'] . ' has been assigned to you',
         'id' => $issue['id'],
         'device_token' => $issue['technician_device_token']
       ];
