@@ -7,6 +7,8 @@ use APP\Controller\ApiController;
 use APP\Exception\BadRequestException;
 use APP\Exception\DatabaseErrorException;
 
+use App\Notification\FirebaseNotification;
+
 use Slim\Http\Response;
 use Slim\Http\Request;
 
@@ -46,5 +48,28 @@ class ControllersCommonUtils
     }
 
     return $newResults;
+  }
+
+  public static function broadcastToAllAdmins($message, $organizationId, $database, $logger) {
+    $admins = $database->select(
+      'user',
+      ['id', 'name(admin_name)', 'device_token'],
+      ['organization_id' => $organizationId, 'role' => 'Admin']
+    );
+    // $this->logger->info(json_encode($admins));
+    foreach ($admins as $admin) {
+      if ($admin['device_token'] !== null) {
+        $firebaseNotification = new FirebaseNotification($admin['device_token'], $logger);
+        // $this->logger->info($firebaseNotification->getDeviceToken());
+        $results = $firebaseNotification->sendFirebaseNotification(
+            $message['title'],
+            $message['body'],
+            $message
+        );
+        unset($results);
+        unset($firebaseNotificaiton);
+      }
+    }
+    unset($admins);
   }
 }

@@ -28,10 +28,10 @@ class RoutersCommonUtils
     return $token[0];
   }
 
-  static function processRequest(Request $request, array $args, string $methodName, string $httpMethod, Medoo $database, Logger $logger)
+  static function processRequest(Request $request, array $args, string $methodName, Medoo $database, Logger $logger)
   {
     $controller = new ApiController($database, $logger);
-    $data = $httpMethod === 'GET' ? $request->getQueryParams() : $request->getParsedBody();
+    $data = $request->getOriginalMethod() === 'GET' ? $request->getQueryParams() : $request->getParsedBody();
     $user = null;
 
     if ($methodName === 'login') {
@@ -56,10 +56,6 @@ class RoutersCommonUtils
 
   static function prepareSuccessResponse(Response $response, $message, int $httpStatusCode, $logger)
   {
-    // $logger->info($message['user']);
-    if ($message['user'] !== null) {
-      $response = $response->withHeader('user-role', $message['user']['role']);
-    }
     return $response->withJson($message['response'], $httpStatusCode);
   }
 

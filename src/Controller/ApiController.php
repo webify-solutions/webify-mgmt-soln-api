@@ -8,6 +8,7 @@ use APP\Exception\DatabaseErrorException;
 use APP\Exception\UnauthorizedException;
 
 use App\Utils\ControllersCommonUtils;
+use App\Notification\FirebaseNotification;
 
 use PDO;
 use \Medoo\Medoo;
@@ -42,7 +43,7 @@ class ApiController
         '[>]customer' => ['login_name' => 'login_name']
       ],
       ['user.id', 'user.organization_id', 'user.login_name', 'user.name', 'password', 'mobile_token',
-        'user.phone', 'user.email', 'role', 'customer.id(customer_id)'],
+        'device_token', 'user.phone', 'user.email', 'role', 'customer.id(customer_id)'],
       $where
     );
 
@@ -179,8 +180,7 @@ class ApiController
       SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
         CONCAT(customer_number, ' : ', c.`name`) AS customer_name, c.address,
         c.longitude, c.latitude, i.product_id, p.`name` AS product_name,
-        o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`,
-        '". $user['role'] . "' as 'auth_user_role'
+        o.order_date as ordered_date,  i.technician_id, t.`name` as technician_name, i.`status`
       FROM issues i
       INNER JOIN customer c ON (c.id = i.customer_id)
       INNER JOIN product p ON (p.id = i.product_id)
@@ -239,7 +239,20 @@ class ApiController
     // $this->logger->info('Query results: ' . json_encode($issues));
     // $this->logger->info(json_encode($products));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
+
     $data['id'] = $this->database->id();
+
+    if ($data['status'] === 'Draft') {
+      $this->logger->info('Notify all admins of new issue');
+      // $this->logger->info($organizationId);
+      $message = [
+        'title' => 'New Issue Created',
+        'body' => 'A new issue has been created in your organization ',
+        'id' => $data['id']
+      ];
+      ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
+    }
+
     return $data;
   }
 
@@ -273,10 +286,139 @@ class ApiController
         'id' => $args['issue_id']
       ]
     );
-
-    // $this->logger->info('Query results: ' . json_encode($issues));
-    // $this->logger->info(json_encode($products));
     ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
+
+    $organization_id = $user['organization_id'];
+    $queryString = "
+    SELECT i.id, i.`subject` AS title, i.description, i.customer_id,
+      cu.device_token as customer_device_token, i.technician_id,
+      t.device_token as technician_device_token, t.`name` as technician_name,
+      i.`status`
+    FROM issues i
+    INNER JOIN customer c on (c.id = i.customer_id)
+    LEFT JOIN user cu ON (cu.login_name = c.login_name)
+    LEFT JOIN user t ON (t.id = i.technician_id)
+      WHERE i.id = " . $args['issue_id'];
+    $queryString .= " GROUP BY i.id";
+    $queryString .= " ORDER BY i.created_at DESC LIMIT 1";
+
+    // $this->logger->info($queryString);
+    $issuesQuery = $this->database->query($queryString);
+    $issue = $issuesQuery->fetchAll(PDO::FETCH_ASSOC)[0];
+    // $this->logger->info(json_encode($this->database->log()));
+    // $this->logger->error(json_encode($this->database->error()));
+    // $this->logger->info(json_encode($issue));
+
+    if ($data['status'] === 'Assigned')
+    {
+      // $this->logger->info('Notify technician of new assignment ' . $issue['technician_device_token']);
+      $data = [
+        'title' => 'New Issue Assigned',
+        'body' => 'A new issue ' . $issue['title'] . ' has been assigned to you',
+        'id' => $issue['id'],
+        'device_token' => $issue['technician_device_token']
+      ];
+      // $this->logger->info(json_encode($data));
+      $results = $this->sendNotification($data);
+      // $this->logger->info($results);
+      unset($results);
+
+      // $this->logger->info('Notify technician of new assignment ' . $issue['customer_device_token']);
+      $data = [
+        'title' => 'New Issue Assigned',
+        'body' => 'A new issue has been assigned to the Technician ' . $issue['technician_name'],
+        'id' => $issue['id'],
+        'device_token' => $issue['customer_device_token']
+      ];
+      // $this->logger->info(json_encode($data));
+      $results = $this->sendNotification($data);
+      // $this->logger->info($results);
+      unset($results);
+
+    } else if ($data['status'] === 'PendingCustomerApproval')
+    {
+      // $this->logger->info('Notify technician of new assignment ' . $issue['technician_device_token']);
+      $data = [
+        'title' => 'تم حل المشكلة',
+        'body' => "Your issue '" . $issue['title'] . "' has been resolved. Please close issue if you're satisfied",
+        'id' => $issue['id'],
+        'device_token' => $issue['customer_device_token']
+      ];
+      // $this->logger->info(json_encode($data));
+      $results = $this->sendNotification($data);
+      // $this->logger->info($results);
+      unset($results);
+
+    } else if ($data['status'] === 'Closed' || $data['status'] === 'Cancelled')
+    {
+      if (isset($issue['technician_device_token']) && $issue['technician_device_token'] !== null)
+      {
+        $this->logger->info('Notify technician of close issue ' . $issue['technician_device_token']);
+        $data = [
+          'title' => 'Issue Closed',
+          'body' => "Your assinged issue '" . $issue['title'] . "' has been approved",
+          'id' => $args['issue_id'],
+          'device_token' => $issue['technician_device_token']
+        ];
+        $this->logger->info(json_encode($data));
+        $results = $this->sendNotification($data);
+
+        // $this->logger->info($results);
+        unset($results);
+      }
+
+      // $this->logger->info('Notify admins an issue has been cancelled);
+      $message = [
+        'title' => 'Issue Closed',
+        'body' => 'An issue has been accepted by the customer in your organization ',
+        'id' => $data['id']
+      ];
+      ControllersCommonUtils::broadcastToAllAdmins($message, $user['organization_id'], $this->database, $this->logger);
+    }
+
     return $data;
+  }
+
+  public function updateUserDeviceToken($data, $args, $user)
+  {
+    if (isset($data['device_token'])) {
+      // $this->logger->info('Updating ' . $data['id'] . ' user mobile token');
+      $results = $this->database->update(
+        'user',
+        ['device_token' => $data['device_token']],
+        ['id' => $user['id']]
+      );
+      ControllersCommonUtils::validateDatabaseExecResults($this->database, $results, $this->logger);
+    } else {
+      throw new BadRequestException("device_token field is missing in the JSON request");
+    }
+
+    return $data;
+  }
+
+  public function sendNotification($data, $args = null, $user = null) {
+    if (isset($data['device_token']) === false ) {
+      throw new BadRequestException("device_token field is missing in the JSON request");
+    }
+    if (isset($data['title']) === false ) {
+      throw new BadRequestException("title field is missing in the JSON request");
+    }
+    if (isset($data['body']) === false ) {
+      throw new BadRequestException("body field is missing in the JSON request");
+    }
+
+    $deviceToken = $data['device_token'];
+    $firebaseNotification = new FirebaseNotification($deviceToken, $this->logger);
+    unset($data['device_token']);
+    $this->logger->info('Sending notification to ' . $deviceToken);
+    $results = $firebaseNotification->sendFirebaseNotification(
+        $data['title'],
+        $data['body'],
+        $data
+    );
+    // $this->logger->info($results);
+    unset($firebaseNotification);
+
+    return json_decode($results);
   }
 }
